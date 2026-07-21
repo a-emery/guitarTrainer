@@ -317,6 +317,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         DOM.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
+                // Stop the metronome and reset state before switching tabs
+                stop();
+
+                // Also reset the answer displays, which stop() preserves for review
+                DOM.answerNumberDisplay.textContent = '--';
+                DOM.answerChordDisplay.textContent = '--';
+
                 const tabId = tab.dataset.tab;
                 switchTab(tabId);
 
