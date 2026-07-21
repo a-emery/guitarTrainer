@@ -213,7 +213,7 @@ body {
 
 #global-controls {
     padding: 20px;
-    padding-bottom: 15px;
+    padding-bottom: 25px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -238,7 +238,8 @@ body {
     font-size: 40px;
 }
 
-#key-selector {
+#key-selector,
+#cheat-sheet-key-selector {
     background-color: #333;
     color: #fff;
     border: 1px solid #4adf8e;
@@ -251,7 +252,102 @@ body {
     appearance: none;
 }
 
-#key-selector:focus {
+#key-selector:focus,
+#cheat-sheet-key-selector:focus {
     outline: none;
     border-color: #fff;
+}
+
+.label-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.link-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.link-button:hover {
+    background-color: transparent;
+    color: #4adf8e;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.overlay-content {
+    background-color: #1e1e1e;
+    padding: 20px 30px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 300px;
+    position: relative;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.overlay-content h2 {
+    margin-top: 0;
+    color: #4adf8e;
+}
+
+#cheat-sheet-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+#cheat-sheet-list li {
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #333;
+}
+
+#cheat-sheet-list li:last-child {
+    border-bottom: none;
 }

@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tabs: document.querySelectorAll('.tab-btn'),
         tabContents: document.querySelectorAll('.tab-content'),
         keySelector: document.getElementById('key-selector'),
+        openCheatSheetBtn: document.getElementById('open-cheat-sheet-btn'),
+        cheatSheetOverlay: document.getElementById('cheat-sheet-overlay'),
+        closeOverlayBtn: document.getElementById('close-overlay-btn'),
+        cheatSheetKeySelector: document.getElementById('cheat-sheet-key-selector'),
+        cheatSheetList: document.getElementById('cheat-sheet-list'),
     };
 
     const CONSTANTS = {
@@ -83,6 +88,31 @@ document.addEventListener('DOMContentLoaded', () => {
             scale.push(chromaticScale[noteIndex]);
         }
         return scale;
+    }
+
+    function populateCheatSheet(key) {
+        const scale = getMajorScale(key);
+        if (scale.length === 0) {
+            DOM.cheatSheetList.innerHTML = '<li>Invalid Key</li>';
+            return;
+        }
+
+        let listHtml = '';
+        for (let i = 0; i < 7; i++) {
+            const number = i + 1;
+            let note = scale[i];
+
+            // In a major key, the 2nd, 3rd, and 6th degrees are minor.
+            if ([2, 3, 6].includes(number)) {
+                note += 'm';
+            }
+            // The 7th degree is diminished.
+            else if (number === 7) {
+                note += '°';
+            }
+            listHtml += `<li><span>${number}</span> <span>${note}</span></li>`;
+        }
+        DOM.cheatSheetList.innerHTML = listHtml;
     }
 
     // =================================================================================
@@ -228,6 +258,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function switchTab(tabId) {
+        // Deactivate all tabs and content
+        DOM.tabs.forEach(t => t.classList.remove('active'));
+        DOM.tabContents.forEach(c => c.classList.remove('active'));
+
+        // Activate the new tab and its content
+        const tabToActivate = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+        const contentToActivate = document.getElementById(tabId);
+
+        if (tabToActivate && contentToActivate) {
+            tabToActivate.classList.add('active');
+            contentToActivate.classList.add('active');
+        } else {
+            // Fallback to the first tab if the saved one is invalid
+            DOM.tabs[0].classList.add('active');
+            DOM.tabContents[0].classList.add('active');
+            console.warn(`Could not find tab with id: ${tabId}. Defaulting to first tab.`);
+        }
+    }
+
     // =================================================================================
     // APPLICATION CONTROL
     // =================================================================================
@@ -309,20 +359,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
         DOM.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                // Deactivate all tabs and content
-                DOM.tabs.forEach(t => t.classList.remove('active'));
-                DOM.tabContents.forEach(c => c.classList.remove('active'));
+                const tabId = tab.dataset.tab;
+                switchTab(tabId);
 
-                // Activate the clicked tab and its content
-                tab.classList.add('active');
-                const contentId = tab.dataset.tab;
-                document.getElementById(contentId).classList.add('active');
+                // Update URL with query parameter without reloading the page
+                const url = new URL(window.location);
+                url.searchParams.set('tab', tabId);
+                history.pushState({}, '', url);
             });
+        });
+
+        DOM.openCheatSheetBtn.addEventListener('click', () => {
+            // Sync the overlay's key selector with the main one and populate
+            DOM.cheatSheetKeySelector.value = State.currentKey;
+            populateCheatSheet(State.currentKey);
+            DOM.cheatSheetOverlay.classList.remove('hidden');
+        });
+
+        DOM.closeOverlayBtn.addEventListener('click', () => {
+            DOM.cheatSheetOverlay.classList.add('hidden');
+        });
+
+        // Also close overlay if clicking on the background
+        DOM.cheatSheetOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cheatSheetOverlay) {
+                DOM.cheatSheetOverlay.classList.add('hidden');
+            }
+        });
+
+        DOM.cheatSheetKeySelector.addEventListener('change', (e) => {
+            populateCheatSheet(e.target.value);
         });
     }
 
     function init() {
         bindEventListeners();
+
+        // Check for tab in URL on page load and switch to it
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabId = urlParams.get('tab');
+        if (tabId) {
+            switchTab(tabId);
+        }
     }
 
     init();
