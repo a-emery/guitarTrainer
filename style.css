@@ -93,8 +93,8 @@ body {
 }
 
 .beat-dot {
-    width: 35px;
-    height: 35px;
+    width: 30px;
+    height: 30px;
     background-color: #333;
     border-radius: 50%;
     display: flex;
@@ -110,7 +110,7 @@ body {
 
 .accent-caret {
     color: #121212;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
 }
 
@@ -126,6 +126,10 @@ body {
     color: #a0a0a0;
     font-weight: 500;
     text-transform: uppercase;
+}
+
+label[for="tempo-slider"] {
+    font-size: 14px;
 }
 
 #tempo-slider {
@@ -220,11 +224,10 @@ body {
 }
 
 #global-controls {
-    padding: 20px;
-    padding-bottom: 20px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     border-top: 1px solid #333;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
     z-index: 10;
@@ -232,7 +235,8 @@ body {
 
 #metronome {
     display: flex;
-    justify-content: space-around;
+    gap: 15px;
+    justify-content: center;
 }
 
 #answer-display-container {
@@ -395,8 +399,8 @@ body {
     }
 
     .beat-dot {
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
     }
 
     .display-header,
@@ -411,5 +415,9 @@ body {
     #start-stop-btn {
         font-size: 22px;
         padding-bottom: 20px; /* Remove safe-area padding on desktop */
+    }
+
+    label[for="tempo-slider"] {
+        font-size: 16px;
     }
 }
