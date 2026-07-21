@@ -8,6 +8,11 @@
 </head>
 <body>
     <div id="app">
+        <div id="tab-nav">
+            <button class="tab-btn active" data-tab="fretboard-tab-content">Fretboard</button>
+            <button class="tab-btn" data-tab="numbers-tab-content">Numbers</button>
+        </div>
+
         <div id="app-body">
             <div id="fretboard-tab-content" class="tab-content active">
                 <div id="display-container">
@@ -20,41 +25,63 @@
                         <div class="display" id="note-display">--</div>
                     </div>
                 </div>
-
-                <div id="metronome">
-                    <div class="beat-dot" id="beat-1"><span class="accent-caret">^</span></div>
-                    <div class="beat-dot" id="beat-2"></div>
-                    <div class="beat-dot" id="beat-3"></div>
-                    <div class="beat-dot" id="beat-4"></div>
-                </div>
-
-                <div id="controls">
-                    <div class="control-group">
-                        <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
-                        <input type="range" id="tempo-slider" min="40" max="240" value="120">
+                <div class="control-group">
+                    <label>Note Type:</label>
+                    <div id="note-type-selector">
+                        <button class="note-type-btn active" data-type="naturals">Naturals</button>
+                        <button class="note-type-btn" data-type="sharps">Sharps</button>
+                        <button class="note-type-btn" data-type="flats">Flats</button>
+                        <button class="note-type-btn" data-type="all">All</button>
                     </div>
-
-                    <div class="control-group">
-                        <label>Note Type:</label>
-                        <div id="note-type-selector">
-                            <button class="note-type-btn active" data-type="naturals">Naturals</button>
-                            <button class="note-type-btn" data-type="sharps">Sharps</button>
-                            <button class="note-type-btn" data-type="flats">Flats</button>
-                            <button class="note-type-btn" data-type="all">All</button>
-                        </div>
-                    </div>
-
-                    <button id="start-stop-btn">Start</button>
                 </div>
             </div>
             <div id="numbers-tab-content" class="tab-content">
-                <h1>Numbers</h1>
+                <div class="control-group">
+                    <label for="key-selector">Key:</label>
+                    <select id="key-selector">
+                        <option value="C">C</option>
+                        <option value="Db">Db</option>
+                        <option value="D">D</option>
+                        <option value="Eb">Eb</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="F#">F#</option>
+                        <option value="G">G</option>
+                        <option value="Ab">Ab</option>
+                        <option value="A">A</option>
+                        <option value="Bb">Bb</option>
+                        <option value="B">B</option>
+                    </select>
+                </div>
+                <div class="display-wrapper">
+                    <h3 class="display-header">Current Number</h3>
+                    <div class="display" id="current-number-display">--</div>
+                </div>
+                <div id="answer-display-container">
+                    <div class="display-wrapper">
+                        <h3 class="display-header">Number</h3>
+                        <div class="display" id="answer-number-display">--</div>
+                    </div>
+                    <div class="display-wrapper">
+                        <h3 class="display-header">Note</h3>
+                        <div class="display" id="answer-note-display">--</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="tab-nav">
-            <button class="tab-btn active" data-tab="fretboard-tab-content">Fretboard</button>
-            <button class="tab-btn" data-tab="numbers-tab-content">Numbers</button>
+        <div id="global-controls">
+            <div id="metronome">
+                <div class="beat-dot" id="beat-1"><span class="accent-caret">^</span></div>
+                <div class="beat-dot" id="beat-2"></div>
+                <div class="beat-dot" id="beat-3"></div>
+                <div class="beat-dot" id="beat-4"></div>
+            </div>
+            <div class="control-group">
+                <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
+                <input type="range" id="tempo-slider" min="40" max="240" value="120">
+            </div>
+            <button id="start-stop-btn">Start</button>
         </div>
     </div>
 

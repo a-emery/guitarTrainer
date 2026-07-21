@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const stringDisplay = document.getElementById('string-display');
     const noteDisplay = document.getElementById('note-display');
+    const currentNumberDisplay = document.getElementById('current-number-display');
+    const answerNumberDisplay = document.getElementById('answer-number-display');
+    const answerNoteDisplay = document.getElementById('answer-note-display');
     const beatDots = [
         document.getElementById('beat-1'),
         document.getElementById('beat-2'),
@@ -14,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startStopBtn = document.getElementById('start-stop-btn');
     const tabs = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    const keySelector = document.getElementById('key-selector');
 
     let audioContext;
     let scheduler;
@@ -24,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRunning = false;
     let accentEnabled = true;
     let noteType = 'naturals';
+    let previousString = null;
+    let previousNote = null;
+    let currentKey = 'C';
+    let currentNashvilleNumber = null;
+    let previousNashvilleNumber = null;
+    let previousNashvilleNote = null;
 
     const notes = {
         naturals: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
@@ -31,6 +41,26 @@ document.addEventListener('DOMContentLoaded', () => {
         flats: ['Ab', 'Bb', 'Db', 'Eb', 'Gb'],
         all: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'Ab', 'Bb', 'Db', 'Eb', 'Gb'],
     };
+
+    const chromaticScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const keyAliases = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+
+    function getMajorScale(rootNote) {
+        const scale = [];
+        const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11]; // Intervals in half steps
+
+        // Handle aliases like Db -> C# for easier calculation
+        const rootNoteForCalc = keyAliases[rootNote] || rootNote;
+        const startIndex = chromaticScale.indexOf(rootNoteForCalc);
+
+        if (startIndex === -1) return [];
+
+        for (const interval of majorScaleIntervals) {
+            const noteIndex = (startIndex + interval) % 12;
+            scale.push(chromaticScale[noteIndex]);
+        }
+        return scale;
+    }
 
     // --- Audio Setup ---
     function setupAudio() {
@@ -80,8 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const isFirstBeat = currentBeat === 0;
             playSound(nextNoteTime, isFirstBeat && accentEnabled);
 
+            // On the first beat, update the active tab's display
             if (isFirstBeat) {
-                updateDisplay();
+                const activeTabId = document.querySelector('.tab-btn.active').dataset.tab;
+                if (activeTabId === 'fretboard-tab-content') {
+                    updateFretboardDisplay();
+                } else if (activeTabId === 'numbers-tab-content') {
+                    updateNumbersDisplay();
+                }
             }
 
             updateVisuals(currentBeat, nextNoteTime);
@@ -99,18 +135,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Application Logic ---
-    function updateDisplay() {
-        const randomString = Math.floor(Math.random() * 6) + 1;
-        const availableNotes = notes[noteType];
-        const randomNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
+    function updateFretboardDisplay() {
+        let newString;
+        do {
+            newString = Math.floor(Math.random() * 6) + 1;
+        } while (newString === previousString);
+        previousString = newString;
 
-        stringDisplay.textContent = randomString;
-        noteDisplay.textContent = randomNote;
+        const availableNotes = notes[noteType];
+        let newNote;
+        // Prevent infinite loop if only one note is possible
+        if (availableNotes.length > 1) {
+            do {
+                newNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
+            } while (newNote === previousNote);
+        } else {
+            newNote = availableNotes.length ? availableNotes[0] : '--';
+        }
+        previousNote = newNote;
+
+        stringDisplay.textContent = newString;
+        noteDisplay.textContent = newNote;
+    }
+
+    function updateNumbersDisplay() {
+        // On each new measure, the "current" number becomes the "previous" one.
+        if (currentNashvilleNumber !== null) {
+            previousNashvilleNumber = currentNashvilleNumber;
+            const scale = getMajorScale(currentKey);
+            if (scale.length > 0) {
+                previousNashvilleNote = scale[previousNashvilleNumber - 1];
+            }
+        }
+
+        // Generate a new "current" number for the user to solve.
+        let newNashvilleNumber;
+        do {
+            newNashvilleNumber = Math.floor(Math.random() * 7) + 1;
+        } while (newNashvilleNumber === currentNashvilleNumber);
+        currentNashvilleNumber = newNashvilleNumber;
+
+        // Update the top display with the new number.
+        currentNumberDisplay.textContent = currentNashvilleNumber;
+
+        // Update the bottom "answer" displays if we have a previous number.
+        if (previousNashvilleNumber !== null) {
+            answerNumberDisplay.textContent = previousNashvilleNumber;
+
+            let displayNote = previousNashvilleNote;
+            // In a major key, the 2nd, 3rd, and 6th degrees are minor.
+            if ([2, 3, 6].includes(previousNashvilleNumber)) {
+                displayNote += 'm';
+            }
+            // The 7th degree is diminished.
+            else if (previousNashvilleNumber === 7) {
+                displayNote += '°';
+            }
+
+            answerNoteDisplay.textContent = displayNote;
+        }
     }
 
     function start() {
         if (isRunning) return;
         isRunning = true;
+
+        // Reset displays and state for a clean start
+        currentNashvilleNumber = null;
+        currentNumberDisplay.textContent = '--';
+        answerNumberDisplay.textContent = '--';
+        answerNoteDisplay.textContent = '--';
 
         setupAudio();
         audioContext.resume(); // Important for autoplay policies
@@ -131,8 +225,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.cancelAnimationFrame(scheduler);
         clearTimeout(visualsTimer);
 
+        // Clear fretboard displays and the "current" number display.
+        // Leave the "answer" displays populated.
         stringDisplay.textContent = '--';
         noteDisplay.textContent = '--';
+        currentNumberDisplay.textContent = '--';
         beatDots.forEach(dot => dot.classList.remove('active'));
 
         startStopBtn.textContent = 'Start';
@@ -164,6 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
     beatDots[0].addEventListener('click', () => {
         accentEnabled = !accentEnabled;
         accentCaret.style.display = accentEnabled ? 'block' : 'none';
+    });
+
+    keySelector.addEventListener('change', (e) => {
+        currentKey = e.target.value;
     });
 
     tabs.forEach(tab => {
