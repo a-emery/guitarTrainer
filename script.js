@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeOverlayBtn: document.getElementById('close-overlay-btn'),
         cheatSheetKeySelector: document.getElementById('cheat-sheet-key-selector'),
         cheatSheetList: document.getElementById('cheat-sheet-list'),
+        accentSound: document.getElementById('accent-sound'),
+        standardSound: document.getElementById('standard-sound'),
     };
 
     const CONSTANTS = {
@@ -47,10 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =================================================================================
 
     const State = {
-        audioContext: null,
         scheduler: null,
-        visualsTimer: null,
-        nextNoteTime: 0.0,
         currentBeat: 0,
         tempo: 120,
         isRunning: false,
@@ -119,78 +118,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // AUDIO
     // =================================================================================
 
-    function setupAudio() {
-        if (State.audioContext) return;
-        try {
-            State.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            // This is a workaround for iOS to play sound even with the mute switch on.
-            const silent = State.audioContext.createGain();
-            silent.gain.value = 0;
-            const p = State.audioContext.createOscillator();
-            p.type = 'square';
-            p.connect(silent);
-            silent.connect(State.audioContext.destination);
-            p.start(0);
-            p.stop(0.01);
-        } catch (e) {
-            console.error("Web Audio API is not supported in this browser");
-        }
-    }
-
-    function playSound(time, accent) {
-        if (!State.audioContext) return;
-        const osc = State.audioContext.createOscillator();
-        const gain = State.audioContext.createGain();
-        osc.connect(gain);
-        gain.connect(State.audioContext.destination);
-
-        // Use a triangle wave and higher frequencies for a brighter, more traditional click
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(accent ? 1600.0 : 1000.0, time);
-        gain.gain.setValueAtTime(1, time);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-
-        osc.start(time);
-        osc.stop(time + 0.05);
+    function playSound(accent) {
+        const sound = accent ? DOM.accentSound : DOM.standardSound;
+        sound.currentTime = 0;
+        sound.play().catch(e => console.error("Error playing sound:", e));
     }
 
     // =================================================================================
     // METRONOME
     // =================================================================================
 
-    function nextBeat() {
-        const secondsPerBeat = 60.0 / State.tempo;
-        State.nextNoteTime += secondsPerBeat;
-        State.currentBeat = (State.currentBeat + 1) % 4;
-    }
-
     function schedule() {
-        while (State.nextNoteTime < State.audioContext.currentTime + 0.1) {
-            const isFirstBeat = State.currentBeat === 0;
-            playSound(State.nextNoteTime, isFirstBeat && State.accentEnabled);
+        if (!State.isRunning) return;
 
-            // On the first beat, update the active tab's display
-            if (isFirstBeat) {
-                const activeTabId = document.querySelector('.tab-btn.active').dataset.tab;
-                if (activeTabId === 'fretboard-tab-content') {
-                    updateFretboardDisplay();
-                } else if (activeTabId === 'numbers-tab-content') {
-                    updateNumbersDisplay();
-                }
+        const isFirstBeat = State.currentBeat === 0;
+        playSound(isFirstBeat && State.accentEnabled);
+        updateVisuals(State.currentBeat);
+
+        // On the first beat, update the active tab's display
+        if (isFirstBeat) {
+            const activeTabId = document.querySelector('.tab-btn.active').dataset.tab;
+            if (activeTabId === 'fretboard-tab-content') {
+                updateFretboardDisplay();
+            } else if (activeTabId === 'numbers-tab-content') {
+                updateNumbersDisplay();
             }
-
-            updateVisuals(State.currentBeat, State.nextNoteTime);
-            nextBeat();
         }
-        State.scheduler = window.requestAnimationFrame(schedule);
+
+        State.currentBeat = (State.currentBeat + 1) % 4;
+        const interval = (60 / State.tempo) * 1000;
+        State.scheduler = setTimeout(schedule, interval);
     }
 
-    function updateVisuals(beat, time) {
-        State.visualsTimer = setTimeout(() => {
-            DOM.beatDots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === beat);
-            });
-        }, (time - State.audioContext.currentTime) * 1000);
+    function updateVisuals(beat) {
+        DOM.beatDots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === beat);
+        });
     }
 
     // =================================================================================
@@ -290,15 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
         State.currentNashvilleNumber = null;
         DOM.currentNumberDisplay.textContent = '--';
         DOM.answerNumberDisplay.textContent = '--';
-        DOM.answerNoteDisplay.textContent = '--';
+        DOM.answerChordDisplay.textContent = '--';
 
-        setupAudio();
-        State.audioContext.resume(); // Important for autoplay policies
-
-        State.currentBeat = 0; // To start on beat 1 immediately
-        State.nextNoteTime = State.audioContext.currentTime;
-
-        schedule();
+        // Immediately play the first beat and then schedule the rest
+        State.currentBeat = 0;
+        schedule(); 
 
         DOM.startStopBtn.textContent = 'Stop';
         DOM.startStopBtn.classList.add('running');
@@ -308,8 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!State.isRunning) return;
         State.isRunning = false;
 
-        window.cancelAnimationFrame(State.scheduler);
-        clearTimeout(State.visualsTimer);
+        clearTimeout(State.scheduler);
 
         // Clear fretboard displays and the "current" number display.
         // Leave the "answer" displays populated.
