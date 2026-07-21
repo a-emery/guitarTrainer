@@ -32,22 +32,29 @@ body {
 
 #app-body {
     flex-grow: 1;
-    overflow-y: auto;
-    padding: 20px;
+    overflow: hidden; /* Prevent scrolling on the main body */
 }
 
 .tab-content {
     display: none;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .tab-content.active {
     display: block;
 }
 
+#fretboard-tab-content.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
 #display-container {
     display: flex;
     justify-content: space-around;
-    margin-bottom: 40px;
 }
 
 .display-wrapper {
@@ -80,7 +87,6 @@ body {
 #metronome {
     display: flex;
     justify-content: space-around;
-    margin-bottom: 40px;
 }
 
 .beat-dot {

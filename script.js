@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         naturals: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
         sharps: ['A#', 'C#', 'D#', 'F#', 'G#'],
         flats: ['Ab', 'Bb', 'Db', 'Eb', 'Gb'],
-        all: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+        all: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'Ab', 'Bb', 'Db', 'Eb', 'Gb'],
     };
 
     // --- Audio Setup ---
