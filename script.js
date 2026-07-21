@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let audioContext;
     let scheduler;
+    let visualsTimer;
     let nextNoteTime = 0.0;
     let currentBeat = 0;
     let tempo = 120;
@@ -55,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.connect(gain);
         gain.connect(audioContext.destination);
 
-        osc.frequency.setValueAtTime(accent ? 880.0 : 440.0, time);
+        // Use a triangle wave and higher frequencies for a brighter, more traditional click
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(accent ? 1600.0 : 1000.0, time);
         gain.gain.setValueAtTime(1, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
 
@@ -86,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateVisuals(beat, time) {
-        setTimeout(() => {
+        visualsTimer = setTimeout(() => {
             beatDots.forEach((dot, index) => {
                 dot.classList.toggle('active', index === beat);
             });
@@ -124,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isRunning = false;
 
         window.cancelAnimationFrame(scheduler);
+        clearTimeout(visualsTimer);
 
         stringDisplay.textContent = '--';
         noteDisplay.textContent = '--';
