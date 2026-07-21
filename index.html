@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Guitar Fretboard Trainer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="display-container">
+            <div class="display" id="string-display">--</div>
+            <div class="display" id="note-display">--</div>
+        </div>
+
+        <div id="metronome">
+            <div class="beat-dot" id="beat-1"><span class="accent-caret">^</span></div>
+            <div class="beat-dot" id="beat-2"></div>
+            <div class="beat-dot" id="beat-3"></div>
+            <div class="beat-dot" id="beat-4"></div>
+        </div>
+
+        <div id="controls">
+            <div class="control-group">
+                <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
+                <input type="range" id="tempo-slider" min="40" max="240" value="120">
+            </div>
+
+            <div class="control-group">
+                <label>Note Type:</label>
+                <div id="note-type-selector">
+                    <button class="note-type-btn active" data-type="naturals">Naturals</button>
+                    <button class="note-type-btn" data-type="sharps">Sharps</button>
+                    <button class="note-type-btn" data-type="flats">Flats</button>
+                    <button class="note-type-btn" data-type="all">All</button>
+                </div>
+            </div>
+
+            <button id="start-stop-btn">Start</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
