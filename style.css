@@ -32,12 +32,12 @@ body {
 
 #app-body {
     flex-grow: 1;
-    overflow: hidden; /* Prevent scrolling on the main body */
+    overflow-y: auto; /* Allow vertical scrolling ONLY when content overflows */
 }
 
 .tab-content {
     display: none;
-    height: 100%;
+    min-height: 100%; /* Ensure flex layouts have room to expand */
     padding: 20px;
     box-sizing: border-box;
 }
@@ -70,7 +70,7 @@ body {
 }
 
 .display-header {
-    margin: 0 0 10px 0;
+    margin: 10px 0;
     font-size: 18px;
     font-weight: 500;
     color: #a0a0a0;
@@ -79,13 +79,13 @@ body {
 
 .display {
     background-color: #1e1e1e;
-    width: 110px;
-    height: 110px;
+    width: 95px;
+    height: 95px;
     border-radius: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 44px;
+    font-size: 38px;
     font-weight: bold;
     border: 1px solid #4adf8e;
     box-shadow: 0 0 15px -5px rgba(74, 223, 142, 0.5);
@@ -118,6 +118,12 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+}
+
+.control-group label {
+    color: #a0a0a0;
+    font-weight: 500;
+    text-transform: uppercase;
 }
 
 #tempo-slider {
@@ -232,10 +238,18 @@ body {
     justify-content: space-around;
 }
 
+#numbers-game-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    flex-grow: 1;
+    gap: 15px;
+}
+
 #answer-display-container .display {
-    width: 90px;
-    height: 90px;
-    font-size: 36px;
+    width: 75px;
+    height: 75px;
+    font-size: 30px;
 }
 
 #key-selector,
@@ -350,4 +364,51 @@ body {
 
 #cheat-sheet-list li:last-child {
     border-bottom: none;
+}
+
+/* =================================================================================
+/* DESKTOP & TABLET RESPONSIVENESS
+/* ================================================================================= */
+
+@media (min-width: 768px) {
+    #app {
+        max-width: 500px;
+        height: auto;
+        max-height: 95vh;
+        margin: 20px auto;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        overflow: hidden; /* Keep children within the rounded corners */
+    }
+
+    .display {
+        width: 120px;
+        height: 120px;
+        font-size: 48px;
+    }
+
+    #answer-display-container .display {
+        width: 90px;
+        height: 90px;
+        font-size: 36px;
+    }
+
+    .beat-dot {
+        width: 45px;
+        height: 45px;
+    }
+
+    .display-header,
+    .control-group label,
+    #key-selector,
+    #cheat-sheet-key-selector,
+    .note-type-btn,
+    .tab-btn {
+        font-size: 18px;
+    }
+
+    #start-stop-btn {
+        font-size: 22px;
+        padding-bottom: 20px; /* Remove safe-area padding on desktop */
+    }
 }
