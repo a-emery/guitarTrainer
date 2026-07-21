@@ -1,79 +1,105 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const stringDisplay = document.getElementById('string-display');
-    const noteDisplay = document.getElementById('note-display');
-    const currentNumberDisplay = document.getElementById('current-number-display');
-    const answerNumberDisplay = document.getElementById('answer-number-display');
-    const answerNoteDisplay = document.getElementById('answer-note-display');
-    const beatDots = [
-        document.getElementById('beat-1'),
-        document.getElementById('beat-2'),
-        document.getElementById('beat-3'),
-        document.getElementById('beat-4')
-    ];
-    const accentCaret = document.querySelector('.accent-caret');
-    const tempoSlider = document.getElementById('tempo-slider');
-    const tempoValue = document.getElementById('tempo-value');
-    const noteTypeButtons = document.querySelectorAll('.note-type-btn');
-    const startStopBtn = document.getElementById('start-stop-btn');
-    const tabs = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const keySelector = document.getElementById('key-selector');
+    // =================================================================================
+    // CONSTANTS & CONFIG
+    // =================================================================================
 
-    let audioContext;
-    let scheduler;
-    let visualsTimer;
-    let nextNoteTime = 0.0;
-    let currentBeat = 0;
-    let tempo = 120;
-    let isRunning = false;
-    let accentEnabled = true;
-    let noteType = 'naturals';
-    let previousString = null;
-    let previousNote = null;
-    let currentKey = 'C';
-    let currentNashvilleNumber = null;
-    let previousNashvilleNumber = null;
-    let previousNashvilleNote = null;
-
-    const notes = {
-        naturals: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-        sharps: ['A#', 'C#', 'D#', 'F#', 'G#'],
-        flats: ['Ab', 'Bb', 'Db', 'Eb', 'Gb'],
-        all: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'Ab', 'Bb', 'Db', 'Eb', 'Gb'],
+    const DOM = {
+        stringDisplay: document.getElementById('string-display'),
+        noteDisplay: document.getElementById('note-display'),
+        currentNumberDisplay: document.getElementById('current-number-display'),
+        answerNumberDisplay: document.getElementById('answer-number-display'),
+        answerNoteDisplay: document.getElementById('answer-note-display'),
+        beatDots: [
+            document.getElementById('beat-1'),
+            document.getElementById('beat-2'),
+            document.getElementById('beat-3'),
+            document.getElementById('beat-4')
+        ],
+        accentCaret: document.querySelector('.accent-caret'),
+        tempoSlider: document.getElementById('tempo-slider'),
+        tempoValue: document.getElementById('tempo-value'),
+        noteTypeButtons: document.querySelectorAll('.note-type-btn'),
+        startStopBtn: document.getElementById('start-stop-btn'),
+        tabs: document.querySelectorAll('.tab-btn'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        keySelector: document.getElementById('key-selector'),
     };
 
-    const chromaticScale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const keyAliases = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+    const CONSTANTS = {
+        NOTES: {
+            naturals: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+            sharps: ['A#', 'C#', 'D#', 'F#', 'G#'],
+            flats: ['Ab', 'Bb', 'Db', 'Eb', 'Gb'],
+            all: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'Ab', 'Bb', 'Db', 'Eb', 'Gb'],
+        },
+        SHARP_CHROMATIC_SCALE: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+        FLAT_CHROMATIC_SCALE:  ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
+        MAJOR_SCALE_INTERVALS: [0, 2, 4, 5, 7, 9, 11],
+    };
+
+    // =================================================================================
+    // STATE
+    // =================================================================================
+
+    const State = {
+        audioContext: null,
+        scheduler: null,
+        visualsTimer: null,
+        nextNoteTime: 0.0,
+        currentBeat: 0,
+        tempo: 120,
+        isRunning: false,
+        accentEnabled: true,
+        noteType: 'naturals',
+        previousString: null,
+        previousNote: null,
+        currentKey: 'C',
+        currentNashvilleNumber: null,
+        previousNashvilleNumber: null,
+        previousNashvilleNote: null,
+    };
+
+    // =================================================================================
+    // MUSIC THEORY UTILS
+    // =================================================================================
 
     function getMajorScale(rootNote) {
         const scale = [];
-        const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11]; // Intervals in half steps
+        const flatKeys = ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'];
+        const useFlatScale = flatKeys.includes(rootNote);
+        const chromaticScale = useFlatScale 
+            ? CONSTANTS.FLAT_CHROMATIC_SCALE 
+            : CONSTANTS.SHARP_CHROMATIC_SCALE;
 
-        // Handle aliases like Db -> C# for easier calculation
-        const rootNoteForCalc = keyAliases[rootNote] || rootNote;
-        const startIndex = chromaticScale.indexOf(rootNoteForCalc);
+        const startIndex = chromaticScale.indexOf(rootNote);
 
-        if (startIndex === -1) return [];
+        if (startIndex === -1) {
+            console.error(`Root note ${rootNote} not found in chosen chromatic scale.`);
+            return [];
+        };
 
-        for (const interval of majorScaleIntervals) {
+        for (const interval of CONSTANTS.MAJOR_SCALE_INTERVALS) {
             const noteIndex = (startIndex + interval) % 12;
             scale.push(chromaticScale[noteIndex]);
         }
         return scale;
     }
 
-    // --- Audio Setup ---
+    // =================================================================================
+    // AUDIO
+    // =================================================================================
+
     function setupAudio() {
-        if (audioContext) return;
+        if (State.audioContext) return;
         try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            State.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             // This is a workaround for iOS to play sound even with the mute switch on.
-            const silent = audioContext.createGain();
+            const silent = State.audioContext.createGain();
             silent.gain.value = 0;
-            const p = audioContext.createOscillator();
+            const p = State.audioContext.createOscillator();
             p.type = 'square';
             p.connect(silent);
-            silent.connect(audioContext.destination);
+            silent.connect(State.audioContext.destination);
             p.start(0);
             p.stop(0.01);
         } catch (e) {
@@ -82,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function playSound(time, accent) {
-        if (!audioContext) return;
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
+        if (!State.audioContext) return;
+        const osc = State.audioContext.createOscillator();
+        const gain = State.audioContext.createGain();
         osc.connect(gain);
-        gain.connect(audioContext.destination);
+        gain.connect(State.audioContext.destination);
 
         // Use a triangle wave and higher frequencies for a brighter, more traditional click
         osc.type = 'triangle';
@@ -98,17 +124,20 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.stop(time + 0.05);
     }
 
-    // --- Metronome Logic ---
+    // =================================================================================
+    // METRONOME
+    // =================================================================================
+
     function nextBeat() {
-        const secondsPerBeat = 60.0 / tempo;
-        nextNoteTime += secondsPerBeat;
-        currentBeat = (currentBeat + 1) % 4;
+        const secondsPerBeat = 60.0 / State.tempo;
+        State.nextNoteTime += secondsPerBeat;
+        State.currentBeat = (State.currentBeat + 1) % 4;
     }
 
     function schedule() {
-        while (nextNoteTime < audioContext.currentTime + 0.1) {
-            const isFirstBeat = currentBeat === 0;
-            playSound(nextNoteTime, isFirstBeat && accentEnabled);
+        while (State.nextNoteTime < State.audioContext.currentTime + 0.1) {
+            const isFirstBeat = State.currentBeat === 0;
+            playSound(State.nextNoteTime, isFirstBeat && State.accentEnabled);
 
             // On the first beat, update the active tab's display
             if (isFirstBeat) {
@@ -120,51 +149,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            updateVisuals(currentBeat, nextNoteTime);
+            updateVisuals(State.currentBeat, State.nextNoteTime);
             nextBeat();
         }
-        scheduler = window.requestAnimationFrame(schedule);
+        State.scheduler = window.requestAnimationFrame(schedule);
     }
 
     function updateVisuals(beat, time) {
-        visualsTimer = setTimeout(() => {
-            beatDots.forEach((dot, index) => {
+        State.visualsTimer = setTimeout(() => {
+            DOM.beatDots.forEach((dot, index) => {
                 dot.classList.toggle('active', index === beat);
             });
-        }, (time - audioContext.currentTime) * 1000);
+        }, (time - State.audioContext.currentTime) * 1000);
     }
 
-    // --- Application Logic ---
+    // =================================================================================
+    // UI UPDATES
+    // =================================================================================
+
     function updateFretboardDisplay() {
         let newString;
         do {
             newString = Math.floor(Math.random() * 6) + 1;
-        } while (newString === previousString);
-        previousString = newString;
+        } while (newString === State.previousString);
+        State.previousString = newString;
 
-        const availableNotes = notes[noteType];
+        const availableNotes = CONSTANTS.NOTES[State.noteType];
         let newNote;
         // Prevent infinite loop if only one note is possible
         if (availableNotes.length > 1) {
             do {
                 newNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
-            } while (newNote === previousNote);
+            } while (newNote === State.previousNote);
         } else {
             newNote = availableNotes.length ? availableNotes[0] : '--';
         }
-        previousNote = newNote;
+        State.previousNote = newNote;
 
-        stringDisplay.textContent = newString;
-        noteDisplay.textContent = newNote;
+        DOM.stringDisplay.textContent = newString;
+        DOM.noteDisplay.textContent = newNote;
     }
 
     function updateNumbersDisplay() {
         // On each new measure, the "current" number becomes the "previous" one.
-        if (currentNashvilleNumber !== null) {
-            previousNashvilleNumber = currentNashvilleNumber;
-            const scale = getMajorScale(currentKey);
+        if (State.currentNashvilleNumber !== null) {
+            State.previousNashvilleNumber = State.currentNashvilleNumber;
+            const scale = getMajorScale(State.currentKey);
             if (scale.length > 0) {
-                previousNashvilleNote = scale[previousNashvilleNumber - 1];
+                State.previousNashvilleNote = scale[State.previousNashvilleNumber - 1];
             }
         }
 
@@ -172,111 +204,126 @@ document.addEventListener('DOMContentLoaded', () => {
         let newNashvilleNumber;
         do {
             newNashvilleNumber = Math.floor(Math.random() * 7) + 1;
-        } while (newNashvilleNumber === currentNashvilleNumber);
-        currentNashvilleNumber = newNashvilleNumber;
+        } while (newNashvilleNumber === State.currentNashvilleNumber);
+        State.currentNashvilleNumber = newNashvilleNumber;
 
         // Update the top display with the new number.
-        currentNumberDisplay.textContent = currentNashvilleNumber;
+        DOM.currentNumberDisplay.textContent = State.currentNashvilleNumber;
 
         // Update the bottom "answer" displays if we have a previous number.
-        if (previousNashvilleNumber !== null) {
-            answerNumberDisplay.textContent = previousNashvilleNumber;
+        if (State.previousNashvilleNumber !== null) {
+            DOM.answerNumberDisplay.textContent = State.previousNashvilleNumber;
 
-            let displayNote = previousNashvilleNote;
+            let displayNote = State.previousNashvilleNote;
             // In a major key, the 2nd, 3rd, and 6th degrees are minor.
-            if ([2, 3, 6].includes(previousNashvilleNumber)) {
+            if ([2, 3, 6].includes(State.previousNashvilleNumber)) {
                 displayNote += 'm';
             }
             // The 7th degree is diminished.
-            else if (previousNashvilleNumber === 7) {
+            else if (State.previousNashvilleNumber === 7) {
                 displayNote += '°';
             }
 
-            answerNoteDisplay.textContent = displayNote;
+            DOM.answerNoteDisplay.textContent = displayNote;
         }
     }
 
+    // =================================================================================
+    // APPLICATION CONTROL
+    // =================================================================================
+
     function start() {
-        if (isRunning) return;
-        isRunning = true;
+        if (State.isRunning) return;
+        State.isRunning = true;
 
         // Reset displays and state for a clean start
-        currentNashvilleNumber = null;
-        currentNumberDisplay.textContent = '--';
-        answerNumberDisplay.textContent = '--';
-        answerNoteDisplay.textContent = '--';
+        State.currentNashvilleNumber = null;
+        DOM.currentNumberDisplay.textContent = '--';
+        DOM.answerNumberDisplay.textContent = '--';
+        DOM.answerNoteDisplay.textContent = '--';
 
         setupAudio();
-        audioContext.resume(); // Important for autoplay policies
+        State.audioContext.resume(); // Important for autoplay policies
 
-        currentBeat = 0; // To start on beat 1 immediately
-        nextNoteTime = audioContext.currentTime;
+        State.currentBeat = 0; // To start on beat 1 immediately
+        State.nextNoteTime = State.audioContext.currentTime;
 
         schedule();
 
-        startStopBtn.textContent = 'Stop';
-        startStopBtn.classList.add('running');
+        DOM.startStopBtn.textContent = 'Stop';
+        DOM.startStopBtn.classList.add('running');
     }
 
     function stop() {
-        if (!isRunning) return;
-        isRunning = false;
+        if (!State.isRunning) return;
+        State.isRunning = false;
 
-        window.cancelAnimationFrame(scheduler);
-        clearTimeout(visualsTimer);
+        window.cancelAnimationFrame(State.scheduler);
+        clearTimeout(State.visualsTimer);
 
         // Clear fretboard displays and the "current" number display.
         // Leave the "answer" displays populated.
-        stringDisplay.textContent = '--';
-        noteDisplay.textContent = '--';
-        currentNumberDisplay.textContent = '--';
-        beatDots.forEach(dot => dot.classList.remove('active'));
+        DOM.stringDisplay.textContent = '--';
+        DOM.noteDisplay.textContent = '--';
+        DOM.currentNumberDisplay.textContent = '--';
+        DOM.beatDots.forEach(dot => dot.classList.remove('active'));
 
-        startStopBtn.textContent = 'Start';
-        startStopBtn.classList.remove('running');
+        DOM.startStopBtn.textContent = 'Start';
+        DOM.startStopBtn.classList.remove('running');
     }
 
-    // --- Event Listeners ---
-    startStopBtn.addEventListener('click', () => {
-        if (isRunning) {
-            stop();
-        } else {
-            start();
-        }
-    });
+    // =================================================================================
+    // INITIALIZATION
+    // =================================================================================
 
-    tempoSlider.addEventListener('input', (e) => {
-        tempo = e.target.value;
-        tempoValue.textContent = tempo;
-    });
-
-    noteTypeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            noteTypeButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            noteType = button.dataset.type;
+    function bindEventListeners() {
+        DOM.startStopBtn.addEventListener('click', () => {
+            if (State.isRunning) {
+                stop();
+            } else {
+                start();
+            }
         });
-    });
 
-    beatDots[0].addEventListener('click', () => {
-        accentEnabled = !accentEnabled;
-        accentCaret.style.display = accentEnabled ? 'block' : 'none';
-    });
-
-    keySelector.addEventListener('change', (e) => {
-        currentKey = e.target.value;
-    });
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Deactivate all tabs and content
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-
-            // Activate the clicked tab and its content
-            tab.classList.add('active');
-            const contentId = tab.dataset.tab;
-            document.getElementById(contentId).classList.add('active');
+        DOM.tempoSlider.addEventListener('input', (e) => {
+            State.tempo = e.target.value;
+            DOM.tempoValue.textContent = State.tempo;
         });
-    });
+
+        DOM.noteTypeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                DOM.noteTypeButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                State.noteType = button.dataset.type;
+            });
+        });
+
+        DOM.beatDots[0].addEventListener('click', () => {
+            State.accentEnabled = !State.accentEnabled;
+            DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
+        });
+
+        DOM.keySelector.addEventListener('change', (e) => {
+            State.currentKey = e.target.value;
+        });
+
+        DOM.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Deactivate all tabs and content
+                DOM.tabs.forEach(t => t.classList.remove('active'));
+                DOM.tabContents.forEach(c => c.classList.remove('active'));
+
+                // Activate the clicked tab and its content
+                tab.classList.add('active');
+                const contentId = tab.dataset.tab;
+                document.getElementById(contentId).classList.add('active');
+            });
+        });
+    }
+
+    function init() {
+        bindEventListeners();
+    }
+
+    init();
 });
