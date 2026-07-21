@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoValue = document.getElementById('tempo-value');
     const noteTypeButtons = document.querySelectorAll('.note-type-btn');
     const startStopBtn = document.getElementById('start-stop-btn');
+    const tabs = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
     let audioContext;
     let scheduler;
@@ -162,5 +164,18 @@ document.addEventListener('DOMContentLoaded', () => {
     beatDots[0].addEventListener('click', () => {
         accentEnabled = !accentEnabled;
         accentCaret.style.display = accentEnabled ? 'block' : 'none';
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Deactivate all tabs and content
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // Activate the clicked tab and its content
+            tab.classList.add('active');
+            const contentId = tab.dataset.tab;
+            document.getElementById(contentId).classList.add('active');
+        });
     });
 });

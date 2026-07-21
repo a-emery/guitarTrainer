@@ -23,9 +23,25 @@ body {
 #app {
     width: 100%;
     max-width: 400px;
-    padding: 20px;
     box-sizing: border-box;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#app-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
 
 #display-container {
@@ -164,4 +180,37 @@ body {
 
 #start-stop-btn.running {
     background-color: #ff4d4d;
+}
+
+#numbers-tab-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 24px;
+    color: #a0a0a0;
+}
+
+#tab-nav {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid #333;
+    background-color: #1e1e1e;
+}
+
+.tab-btn {
+    flex-grow: 1;
+    padding: 15px 0;
+    background: none;
+    color: #a0a0a0;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn.active {
+    color: #4adf8e;
+    border-bottom-color: #4adf8e;
 }
