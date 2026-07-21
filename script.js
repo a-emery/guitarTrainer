@@ -242,6 +242,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =================================================================================
+    // HELPERS
+    // =================================================================================
+
+    function audioReady(audioElement) {
+        return new Promise((resolve, reject) => {
+            // If readyState is 4 (HAVE_ENOUGH_DATA), it's already loaded
+            if (audioElement.readyState >= 4) {
+                return resolve();
+            }
+            
+            const onCanPlayThrough = () => {
+                audioElement.removeEventListener('canplaythrough', onCanPlayThrough);
+                resolve();
+            };
+            
+            const onError = (err) => {
+                audioElement.removeEventListener('error', onError);
+                reject(err);
+            };
+    
+            audioElement.addEventListener('canplaythrough', onCanPlayThrough);
+            audioElement.addEventListener('error', onError);
+        });
+    }
+
+    // =================================================================================
     // APPLICATION CONTROL
     // =================================================================================
 
@@ -357,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function init() {
+    async function init() {
         bindEventListeners();
 
         // Check for tab in URL on page load and switch to it
@@ -365,6 +391,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const tabId = urlParams.get('tab');
         if (tabId) {
             switchTab(tabId);
+        }
+
+        // Wait for audio assets to be ready before enabling the start button
+        try {
+            await Promise.all([
+                audioReady(DOM.accentSound),
+                audioReady(DOM.standardSound)
+            ]);
+            DOM.startStopBtn.disabled = false;
+            DOM.startStopBtn.textContent = 'Start';
+        } catch (error) {
+            console.error("Failed to load audio assets:", error);
+            DOM.startStopBtn.textContent = 'Audio Error';
+            // The button remains disabled on error.
         }
     }
 
