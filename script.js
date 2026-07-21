@@ -114,6 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.cheatSheetList.innerHTML = listHtml;
     }
 
+    function handleFirstBeatUpdates() {
+        const activeTabId = document.querySelector('.tab-btn.active').dataset.tab;
+        if (activeTabId === 'fretboard-tab-content') {
+            updateFretboardDisplay();
+        } else if (activeTabId === 'numbers-tab-content') {
+            updateNumbersDisplay();
+        }
+    }
+
     // =================================================================================
     // AUDIO
     // =================================================================================
@@ -137,12 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // On the first beat, update the active tab's display
         if (isFirstBeat) {
-            const activeTabId = document.querySelector('.tab-btn.active').dataset.tab;
-            if (activeTabId === 'fretboard-tab-content') {
-                updateFretboardDisplay();
-            } else if (activeTabId === 'numbers-tab-content') {
-                updateNumbersDisplay();
-            }
+            handleFirstBeatUpdates();
         }
 
         State.currentBeat = (State.currentBeat + 1) % 4;
@@ -255,9 +259,17 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerNumberDisplay.textContent = '--';
         DOM.answerChordDisplay.textContent = '--';
 
-        // Immediately play the first beat and then schedule the rest
+        // Manually handle the first beat to absorb any audio loading delay.
+        // This ensures the interval between beat 1 and 2 is accurate.
         State.currentBeat = 0;
-        schedule(); 
+        playSound(true && State.accentEnabled);
+        updateVisuals(State.currentBeat);
+        handleFirstBeatUpdates();
+
+        // Schedule the *second* beat to start after the correct interval.
+        State.currentBeat = 1;
+        const interval = (60 / State.tempo) * 1000;
+        State.scheduler = setTimeout(schedule, interval);
 
         DOM.startStopBtn.textContent = 'Stop';
         DOM.startStopBtn.classList.add('running');
