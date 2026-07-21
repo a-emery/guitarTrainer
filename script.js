@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         noteDisplay: document.getElementById('note-display'),
         currentNumberDisplay: document.getElementById('current-number-display'),
         answerNumberDisplay: document.getElementById('answer-number-display'),
-        answerNoteDisplay: document.getElementById('answer-note-display'),
+        answerChordDisplay: document.getElementById('answer-chord-display'),
         beatDots: [
             document.getElementById('beat-1'),
             document.getElementById('beat-2'),
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentKey: 'C',
         currentNashvilleNumber: null,
         previousNashvilleNumber: null,
-        previousNashvilleNote: null,
+        previousNashvilleChord: null,
     };
 
     // =================================================================================
@@ -100,17 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let listHtml = '';
         for (let i = 0; i < 7; i++) {
             const number = i + 1;
-            let note = scale[i];
+            let chord = scale[i];
 
             // In a major key, the 2nd, 3rd, and 6th degrees are minor.
             if ([2, 3, 6].includes(number)) {
-                note += 'm';
+                chord += 'm';
             }
             // The 7th degree is diminished.
             else if (number === 7) {
-                note += '°';
+                chord += '°';
             }
-            listHtml += `<li><span>${number}</span> <span>${note}</span></li>`;
+            listHtml += `<li><span>${number}</span> <span>${chord}</span></li>`;
         }
         DOM.cheatSheetList.innerHTML = listHtml;
     }
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
             State.previousNashvilleNumber = State.currentNashvilleNumber;
             const scale = getMajorScale(State.currentKey);
             if (scale.length > 0) {
-                State.previousNashvilleNote = scale[State.previousNashvilleNumber - 1];
+                State.previousNashvilleChord = scale[State.previousNashvilleNumber - 1];
             }
         }
 
@@ -244,17 +244,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (State.previousNashvilleNumber !== null) {
             DOM.answerNumberDisplay.textContent = State.previousNashvilleNumber;
 
-            let displayNote = State.previousNashvilleNote;
+            let displayChord = State.previousNashvilleChord;
             // In a major key, the 2nd, 3rd, and 6th degrees are minor.
             if ([2, 3, 6].includes(State.previousNashvilleNumber)) {
-                displayNote += 'm';
+                displayChord += 'm';
             }
             // The 7th degree is diminished.
             else if (State.previousNashvilleNumber === 7) {
-                displayNote += '°';
+                displayChord += '°';
             }
 
-            DOM.answerNoteDisplay.textContent = displayNote;
+            DOM.answerChordDisplay.textContent = displayChord;
         }
     }
 

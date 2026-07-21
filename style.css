@@ -38,7 +38,7 @@ body {
 .tab-content {
     display: none;
     min-height: 100%; /* Ensure flex layouts have room to expand */
-    padding: 20px;
+    padding: 20px 20px 5px 20px;
     box-sizing: border-box;
 }
 
@@ -67,10 +67,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 15px;
 }
 
 .display-header {
-    margin: 10px 0;
+    margin: 0 0 10px 0;
     font-size: 18px;
     font-weight: 500;
     color: #a0a0a0;
@@ -118,6 +119,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    margin-bottom: 15px;
 }
 
 .control-group label {
@@ -243,7 +245,6 @@ body {
     flex-direction: column;
     justify-content: space-evenly;
     flex-grow: 1;
-    gap: 15px;
 }
 
 #answer-display-container .display {
