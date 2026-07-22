@@ -48,11 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // STATE
     // =================================================================================
 
+    let audioContext;
+
     const State = {
         scheduler: null,
         currentBeat: 0,
         tempo: 120,
         isRunning: false,
+        nextBeatTime: 0.0, // For self-adjusting timer
         accentEnabled: true,
         noteType: 'naturals',
         previousString: null,
@@ -137,21 +140,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // METRONOME
     // =================================================================================
 
+    // This function uses a self-adjusting timer to stay accurate.
+    // It's more reliable than a simple recursive setTimeout on its own,
+    // especially on mobile browsers which can throttle timers.
     function schedule() {
         if (!State.isRunning) return;
 
+        // The core logic of a beat
         const isFirstBeat = State.currentBeat === 0;
         playSound(isFirstBeat && State.accentEnabled);
         updateVisuals(State.currentBeat);
 
-        // On the first beat, update the active tab's display
         if (isFirstBeat) {
             handleFirstBeatUpdates();
         }
 
+        // Advance beat counter for the next beat
         State.currentBeat = (State.currentBeat + 1) % 4;
+
+        // The self-adjusting part
         const interval = (60 / State.tempo) * 1000;
-        State.scheduler = setTimeout(schedule, interval);
+        const drift = (audioContext.currentTime * 1000) - State.nextBeatTime;
+        State.nextBeatTime += interval;
+
+        // The new timeout is the interval minus the drift.
+        State.scheduler = setTimeout(schedule, interval - drift);
     }
 
     function updateVisuals(beat) {
@@ -251,6 +264,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function start() {
         if (State.isRunning) return;
+
+        // Create/resume AudioContext on first user gesture. This is crucial for
+        // autoplay policies and getting a reliable high-resolution timer.
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
+        }
+
         State.isRunning = true;
 
         // Reset displays and state for a clean start
@@ -259,17 +282,10 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerNumberDisplay.textContent = '--';
         DOM.answerChordDisplay.textContent = '--';
 
-        // Manually handle the first beat to absorb any audio loading delay.
-        // This ensures the interval between beat 1 and 2 is accurate.
         State.currentBeat = 0;
-        playSound(true && State.accentEnabled);
-        updateVisuals(State.currentBeat);
-        handleFirstBeatUpdates();
-
-        // Schedule the *second* beat to start after the correct interval.
-        State.currentBeat = 1;
-        const interval = (60 / State.tempo) * 1000;
-        State.scheduler = setTimeout(schedule, interval);
+        // Set the time for the first beat to be "now".
+        State.nextBeatTime = audioContext.currentTime * 1000;
+        schedule(); // Start the timer loop
 
         DOM.startStopBtn.textContent = 'Stop';
         DOM.startStopBtn.classList.add('running');
