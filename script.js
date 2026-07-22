@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // APPLICATION CONTROL
     // =================================================================================
 
-    function start() {
+    async function start() {
         if (State.isRunning) return;
 
         // Create/resume AudioContext on first user gesture. This is crucial for
@@ -270,8 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
+        // If the context was suspended by the browser, we need to wait for it to
+        // resume before we can get an accurate currentTime.
         if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
+            await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
         }
 
         State.isRunning = true;
@@ -283,7 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerChordDisplay.textContent = '--';
 
         State.currentBeat = 0;
-        // Set the time for the first beat to be "now".
+        // Set the time for the first beat to be "now". By awaiting resume(), we
+        // ensure currentTime is accurate.
         State.nextBeatTime = audioContext.currentTime * 1000;
         schedule(); // Start the timer loop
 
@@ -317,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (State.isRunning) {
                 stop();
             } else {
-                start();
+                start(); // No need to await here, let it run
             }
         });
 
