@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentNashvilleNumber: null,
         previousNashvilleNumber: null,
         previousNashvilleChord: null,
+        wakeLockSentinel: null,
     };
 
     // =================================================================================
@@ -278,6 +279,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         State.isRunning = true;
 
+        // Request a screen wake lock to keep the device awake while the metronome
+        // is running. This is a progressive enhancement.
+        if ('wakeLock' in navigator) {
+            try {
+                State.wakeLockSentinel = await navigator.wakeLock.request('screen');
+                console.log('Screen Wake Lock is active.');
+            } catch (err) {
+                // This can happen if the document is not visible or for other reasons.
+                console.error(`${err.name}: ${err.message}`);
+            }
+        }
+
         // Reset displays and state for a clean start
         State.currentNashvilleNumber = null;
         DOM.currentNumberDisplay.textContent = '--';
@@ -299,6 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
         State.isRunning = false;
 
         clearTimeout(State.scheduler);
+
+        // Release the screen wake lock if it was acquired.
+        if (State.wakeLockSentinel) {
+            State.wakeLockSentinel.release().catch(() => {}); // Errors can be safely ignored.
+            State.wakeLockSentinel = null;
+            console.log('Screen Wake Lock released.');
+        }
 
         // Clear fretboard displays and the "current" number display.
         // Leave the "answer" displays populated.
@@ -385,6 +405,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         DOM.cheatSheetKeySelector.addEventListener('change', (e) => {
             populateCheatSheet(e.target.value);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            // When the tab is hidden, stop the metronome if it's running.
+            // This prevents timer drift and also releases the wake lock.
+            if (document.visibilityState === 'hidden' && State.isRunning) {
+                stop();
+            }
         });
     }
 
