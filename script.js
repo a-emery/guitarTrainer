@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accent: null,
             standard: null
         },
+        silentAudioEl: null,
     };
 
     // =================================================================================
@@ -335,11 +336,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Play a silent sound via an <audio> element. This is a fallback/secondary
         // method that can help categorize the app as "media playback".
-        const silentAudio = document.createElement('audio');
-        silentAudio.setAttribute('x-webkit-airplay', 'deny');
-        silentAudio.setAttribute('playsinline', '');
-        silentAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-        silentAudio.play().catch(() => { /* Ignore errors, this is a fire-and-forget unlock attempt */ });
+        // We create the element once and reuse it, ensuring it's part of the DOM,
+        // which is more robust than creating a temporary element on each click.
+        if (!State.silentAudioEl) {
+            State.silentAudioEl = document.createElement('audio');
+            State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
+            State.silentAudioEl.setAttribute('playsinline', '');
+            State.silentAudioEl.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+            State.silentAudioEl.style.display = 'none';
+            document.body.appendChild(State.silentAudioEl);
+        }
+        // The play() call must be made within the user gesture.
+        State.silentAudioEl.play().catch(() => { /* Ignore errors, this is a fire-and-forget unlock attempt */ });
 
         // Ensure audio samples are loaded before starting the metronome.
         await initAudio();
