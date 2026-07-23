@@ -309,23 +309,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // to reliably get permission to play audio and bypass the mute switch.
 
         // 1. Create AudioContext if it doesn't exist.
+        // If the context exists but is suspended (from tab backgrounding), it's most
+        // reliable to discard it and create a new one.
+        if (audioContext && audioContext.state === 'suspended') {
+            console.log('Found suspended AudioContext. Discarding and creating a new one for reliability.');
+            await audioContext.close(); // Asynchronously close the old one before creating a new one.
+            audioContext = null;
+            // The audio buffers are now invalid, as they belonged to the old context.
+            State.audioBuffers.accent = null;
+            State.audioBuffers.standard = null;
+        }
+
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             console.log('New AudioContext created.');
         }
 
-        // Immediately attempt to resume the context. This is asynchronous, but by
-        // calling it here, we ensure it's initiated by the user gesture.
+        // 2. Initiate resume. This is safe even if the context is already running.
+        // We await this promise later, after the synchronous unlocks are done.
         const resumePromise = audioContext.resume();
 
-        // 2. Play a silent sound via Web Audio API. This helps unlock the context.
+        // 3. Play a silent sound via Web Audio API. This helps unlock the context itself.
         const buffer = audioContext.createBuffer(1, 1, 22050);
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.connect(audioContext.destination);
         source.start(0);
 
-        // 3. Play a silent sound via an HTML <audio> element. This is the most
+        // 4. Play a silent sound via an HTML <audio> element. This is the most
         //    reliable method to bypass the iOS hardware mute switch.
         if (!State.silentAudioEl) {
             State.silentAudioEl = document.createElement('audio');
@@ -340,9 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // =========================================================================
         // == ASYNCHRONOUS SETUP
         // =========================================================================
-        // Now that the synchronous unlock is done, we can proceed with async tasks.
-
-        // Wait for the resume promise to resolve.
+        // Now that all synchronous unlocks are done, we can await the promises.
         await resumePromise;
 
         // Load the actual metronome sounds.
