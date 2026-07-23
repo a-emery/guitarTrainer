@@ -301,85 +301,66 @@ document.addEventListener('DOMContentLoaded', () => {
     async function start() {
         if (State.isRunning) return;
 
-        // On mobile browsers, an AudioContext that has been suspended for a while
-        // (e.g., when the tab is backgrounded) can become unresponsive. The most
-        // reliable way to ensure sound plays upon return is to discard the old
-        // context and create a new one.
-        if (audioContext && audioContext.state === 'suspended') {
-            await audioContext.close();
-            audioContext = null;
-            // Invalidate buffers; they belonged to the old, closed context.
-            State.audioBuffers.accent = null;
-            State.audioBuffers.standard = null;
-        }
+        // =========================================================================
+        // == AUDIO UNLOCK & CONTEXT SETUP (CRITICAL FOR IOS)
+        // =========================================================================
+        // The following actions MUST happen synchronously within the user's click
+        // event handler, BEFORE the first `await` call. This is the only way
+        // to reliably get permission to play audio and bypass the mute switch.
 
-        // --- AudioContext Creation and Resumption ---
-        // This must be done within a user gesture (this click handler) to work.
+        // 1. Create AudioContext if it doesn't exist.
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             console.log('New AudioContext created.');
         }
 
+        // 2. Play a silent sound via Web Audio to unlock the context.
+        const buffer = audioContext.createBuffer(1, 1, 22050);
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+
+        // 3. Play a silent sound via an <audio> element to elevate the audio session
+        //    and bypass the hardware mute switch.
+        if (!State.silentAudioEl) {
+            State.silentAudioEl = document.createElement('audio');
+            State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
+            State.silentAudioEl.setAttribute('playsinline', '');
+            State.silentAudioEl.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+            State.silentAudioEl.style.display = 'none';
+            document.body.appendChild(State.silentAudioEl);
+        }
+        // This play() call is the crucial part for the mute switch.
+        State.silentAudioEl.play().catch(() => { /* Ignore errors */ });
+
+        // =========================================================================
+        // == ASYNCHRONOUS SETUP
+        // =========================================================================
+        // Now that the synchronous unlock is done, we can proceed with async tasks.
+
+        // Resume the context if it was suspended (e.g., from tab backgrounding).
         if (audioContext.state === 'suspended') {
-            console.log('AudioContext is suspended, attempting to resume...');
             await audioContext.resume();
-            console.log(`AudioContext state after resume: ${audioContext.state}`);
         }
 
-        // === UNLOCK AUDIO FOR IOS ===
-        // This is the final, most aggressive attempt to bypass the iOS hardware mute switch.
-        // It combines multiple techniques and must be executed synchronously within this user gesture.
-        if (audioContext.state === 'running') {
-            console.log('AudioContext is running, performing audio unlock sequence.');
-
-            // Technique 1: Play a silent buffer via the Web Audio API.
-            const buffer = audioContext.createBuffer(1, 1, 22050);
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start(0);
-            console.log('Silent Web Audio buffer played.');
-
-            // Technique 2: Play a muted, real audio file via an HTML <audio> element.
-            // Using a real file can be a stronger signal to the OS than a data URI.
-            // The element is persistent to be more robust.
-            if (!State.silentAudioEl) {
-                State.silentAudioEl = document.createElement('audio');
-                State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
-                State.silentAudioEl.setAttribute('playsinline', '');
-                State.silentAudioEl.src = 'normal.wav'; // Use a real sound file
-                State.silentAudioEl.muted = true; // IMPORTANT: We don't want to hear this unlock sound
-                State.silentAudioEl.style.display = 'none';
-                document.body.appendChild(State.silentAudioEl);
-                console.log('Persistent silent <audio> element created.');
-            }
-
-            // The play() call must be made within the user gesture.
-            const playPromise = State.silentAudioEl.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('Silent <audio> element played successfully.');
-                }).catch(error => {
-                    console.error('Silent <audio> element play failed:', error);
-                });
-            }
-        }
-
-        // Ensure audio samples are loaded before starting the metronome.
+        // Load the actual metronome sounds.
         await initAudio();
 
-        State.isRunning = true;
-
-        // Request a screen wake lock to keep the device awake while the metronome
-        // is running. This is a progressive enhancement.
+        // Request a screen wake lock to keep the device awake.
         if ('wakeLock' in navigator) {
             try {
                 State.wakeLockSentinel = await navigator.wakeLock.request('screen');
+                console.log('Screen Wake Lock is active.');
             } catch (err) {
-                // This can happen if the document is not visible or for other reasons.
-                console.error(`${err.name}: ${err.message}`);
+                console.error(`Wake Lock request failed: ${err.name}, ${err.message}`);
             }
         }
+
+        // =========================================================================
+        // == START THE METRONOME
+        // =========================================================================
+        State.isRunning = true;
 
         // Reset displays and state for a clean start
         State.currentNashvilleNumber = null;
@@ -388,7 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerChordDisplay.textContent = '--';
 
         State.currentBeat = 0;
-        // Use performance.now() for a reliable, monotonic clock.
         State.nextBeatTime = audioContext.currentTime;
         State.scheduler = setInterval(schedulerLoop, SCHEDULER_LOOKAHEAD_MS);
 
