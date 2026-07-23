@@ -322,15 +322,24 @@ document.addEventListener('DOMContentLoaded', () => {
             await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
         }
 
-        // On iOS, the mute switch can only be bypassed by playing a sound inside a user
-        // gesture. We play a tiny silent buffer through the Web Audio API every time
-        // start is called to "claim" the audio session and prevent the OS from silencing it.
-        // This is the most reliable way to ensure audio plays even if the hardware mute is on.
+        // === UNLOCK AUDIO FOR IOS ===
+        // This is a belt-and-suspenders approach to bypass the iOS hardware mute switch.
+        // It must be done inside a user gesture (this click handler).
+
+        // 1. Play a silent buffer via Web Audio API. This is the primary method.
         const buffer = audioContext.createBuffer(1, 1, 22050);
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.connect(audioContext.destination);
         source.start();
+
+        // 2. Play a silent sound via an <audio> element. This is a fallback/secondary
+        // method that can help categorize the app as "media playback".
+        const silentAudio = document.createElement('audio');
+        silentAudio.setAttribute('x-webkit-airplay', 'deny');
+        silentAudio.setAttribute('playsinline', '');
+        silentAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        silentAudio.play().catch(() => { /* Ignore errors, this is a fire-and-forget unlock attempt */ });
 
         // Ensure audio samples are loaded before starting the metronome.
         await initAudio();
