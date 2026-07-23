@@ -297,13 +297,20 @@ document.addEventListener('DOMContentLoaded', () => {
     async function start() {
         if (State.isRunning) return;
 
-        // Create/resume AudioContext on first user gesture. This is crucial for
-        // autoplay policies and getting a reliable high-resolution timer.
+        // On mobile browsers, an AudioContext that has been suspended for a while
+        // (e.g., when the tab is backgrounded) can become unresponsive. The most
+        // reliable way to ensure sound plays upon return is to discard the old
+        // context and create a new one.
+        if (audioContext && audioContext.state === 'suspended') {
+            await audioContext.close();
+            audioContext = null;
+        }
+
+        // Create a new AudioContext if one doesn't exist. This is crucial for
+        // autoplay policies.
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // If the context was suspended by the browser, we need to wait for it to
-        // resume before we can get an accurate currentTime.
         if (audioContext.state === 'suspended') {
             await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
         }
