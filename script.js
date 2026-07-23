@@ -313,41 +313,57 @@ document.addEventListener('DOMContentLoaded', () => {
             State.audioBuffers.standard = null;
         }
 
-        // Create or resume the AudioContext. This must be done in a user gesture.
+        // --- AudioContext Creation and Resumption ---
+        // This must be done within a user gesture (this click handler) to work.
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('New AudioContext created.');
         }
 
-        // It's possible the context is still suspended (e.g., on first load)
         if (audioContext.state === 'suspended') {
-            await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
+            console.log('AudioContext is suspended, attempting to resume...');
+            await audioContext.resume();
+            console.log(`AudioContext state after resume: ${audioContext.state}`);
         }
 
         // === UNLOCK AUDIO FOR IOS ===
-        // This is a belt-and-suspenders approach to bypass the iOS hardware mute switch.
-        // It must be done inside a user gesture (this click handler).
+        // This is the final, most aggressive attempt to bypass the iOS hardware mute switch.
+        // It combines multiple techniques and must be executed synchronously within this user gesture.
+        if (audioContext.state === 'running') {
+            console.log('AudioContext is running, performing audio unlock sequence.');
 
-        // 1. Play a silent buffer via Web Audio API. This is the primary method.
-        const buffer = audioContext.createBuffer(1, 1, 22050);
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start();
+            // Technique 1: Play a silent buffer via the Web Audio API.
+            const buffer = audioContext.createBuffer(1, 1, 22050);
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContext.destination);
+            source.start(0);
+            console.log('Silent Web Audio buffer played.');
 
-        // 2. Play a silent sound via an <audio> element. This is a fallback/secondary
-        // method that can help categorize the app as "media playback".
-        // We create the element once and reuse it, ensuring it's part of the DOM,
-        // which is more robust than creating a temporary element on each click.
-        if (!State.silentAudioEl) {
-            State.silentAudioEl = document.createElement('audio');
-            State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
-            State.silentAudioEl.setAttribute('playsinline', '');
-            State.silentAudioEl.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-            State.silentAudioEl.style.display = 'none';
-            document.body.appendChild(State.silentAudioEl);
+            // Technique 2: Play a muted, real audio file via an HTML <audio> element.
+            // Using a real file can be a stronger signal to the OS than a data URI.
+            // The element is persistent to be more robust.
+            if (!State.silentAudioEl) {
+                State.silentAudioEl = document.createElement('audio');
+                State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
+                State.silentAudioEl.setAttribute('playsinline', '');
+                State.silentAudioEl.src = 'normal.wav'; // Use a real sound file
+                State.silentAudioEl.muted = true; // IMPORTANT: We don't want to hear this unlock sound
+                State.silentAudioEl.style.display = 'none';
+                document.body.appendChild(State.silentAudioEl);
+                console.log('Persistent silent <audio> element created.');
+            }
+
+            // The play() call must be made within the user gesture.
+            const playPromise = State.silentAudioEl.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Silent <audio> element played successfully.');
+                }).catch(error => {
+                    console.error('Silent <audio> element play failed:', error);
+                });
+            }
         }
-        // The play() call must be made within the user gesture.
-        State.silentAudioEl.play().catch(() => { /* Ignore errors, this is a fire-and-forget unlock attempt */ });
 
         // Ensure audio samples are loaded before starting the metronome.
         await initAudio();
