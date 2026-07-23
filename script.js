@@ -314,15 +314,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('New AudioContext created.');
         }
 
-        // 2. Play a silent sound via Web Audio to unlock the context.
+        // Immediately attempt to resume the context. This is asynchronous, but by
+        // calling it here, we ensure it's initiated by the user gesture.
+        const resumePromise = audioContext.resume();
+
+        // 2. Play a silent sound via Web Audio API. This helps unlock the context.
         const buffer = audioContext.createBuffer(1, 1, 22050);
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.connect(audioContext.destination);
         source.start(0);
 
-        // 3. Play a silent sound via an <audio> element to elevate the audio session
-        //    and bypass the hardware mute switch.
+        // 3. Play a silent sound via an HTML <audio> element. This is the most
+        //    reliable method to bypass the iOS hardware mute switch.
         if (!State.silentAudioEl) {
             State.silentAudioEl = document.createElement('audio');
             State.silentAudioEl.setAttribute('x-webkit-airplay', 'deny');
@@ -331,7 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
             State.silentAudioEl.style.display = 'none';
             document.body.appendChild(State.silentAudioEl);
         }
-        // This play() call is the crucial part for the mute switch.
         State.silentAudioEl.play().catch(() => { /* Ignore errors */ });
 
         // =========================================================================
@@ -339,10 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // =========================================================================
         // Now that the synchronous unlock is done, we can proceed with async tasks.
 
-        // Resume the context if it was suspended (e.g., from tab backgrounding).
-        if (audioContext.state === 'suspended') {
-            await audioContext.resume();
-        }
+        // Wait for the resume promise to resolve.
+        await resumePromise;
 
         // Load the actual metronome sounds.
         await initAudio();
