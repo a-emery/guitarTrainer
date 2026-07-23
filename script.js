@@ -27,9 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cheatSheetOverlay: document.getElementById('cheat-sheet-overlay'),
         closeOverlayBtn: document.getElementById('close-overlay-btn'),
         cheatSheetKeySelector: document.getElementById('cheat-sheet-key-selector'),
-        cheatSheetList: document.getElementById('cheat-sheet-list'),
-        accentSound: document.getElementById('accent-sound'),
-        standardSound: document.getElementById('standard-sound'),
+        cheatSheetList: document.getElementById('cheat-sheet-list')
     };
 
     const CONSTANTS = {
@@ -65,6 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
         previousNashvilleNumber: null,
         previousNashvilleChord: null,
         wakeLockSentinel: null,
+        audioBuffers: {
+            accent: null,
+            standard: null
+        },
     };
 
     // =================================================================================
@@ -131,10 +133,36 @@ document.addEventListener('DOMContentLoaded', () => {
     // AUDIO
     // =================================================================================
 
+    async function loadAudioSample(url) {
+        if (!audioContext) return null;
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        return await audioContext.decodeAudioData(arrayBuffer);
+    }
+
+    async function initAudio() {
+        if (State.audioBuffers.accent && State.audioBuffers.standard) {
+            return; // Already loaded
+        }
+        try {
+            // Load both samples in parallel for efficiency
+            [State.audioBuffers.accent, State.audioBuffers.standard] = await Promise.all([
+                loadAudioSample('accent.wav'),
+                loadAudioSample('normal.wav')
+            ]);
+            console.log('Audio samples loaded and decoded.');
+        } catch (e) {
+            console.error('Error loading audio samples:', e);
+        }
+    }
+
     function playSound(accent) {
-        const sound = accent ? DOM.accentSound : DOM.standardSound;
-        sound.currentTime = 0;
-        sound.play().catch(e => console.error("Error playing sound:", e));
+        const buffer = accent ? State.audioBuffers.accent : State.audioBuffers.standard;
+        if (!buffer || !audioContext) return;
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0);
     }
 
     // =================================================================================
@@ -161,7 +189,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // The self-adjusting part
         const interval = (60 / State.tempo) * 1000;
-        const drift = (audioContext.currentTime * 1000) - State.nextBeatTime;
+        // Use performance.now() for a reliable, monotonic clock that is not affected
+        // by audio context suspension or system time changes.
+        const drift = performance.now() - State.nextBeatTime;
         State.nextBeatTime += interval;
 
         // The new timeout is the interval minus the drift.
@@ -277,6 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
             await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
         }
 
+        // Ensure audio samples are loaded before starting the metronome.
+        await initAudio();
+
         State.isRunning = true;
 
         // Request a screen wake lock to keep the device awake while the metronome
@@ -298,9 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerChordDisplay.textContent = '--';
 
         State.currentBeat = 0;
-        // Set the time for the first beat to be "now". By awaiting resume(), we
-        // ensure currentTime is accurate.
-        State.nextBeatTime = audioContext.currentTime * 1000;
+        // Use performance.now() for a reliable, monotonic clock.
+        State.nextBeatTime = performance.now();
         schedule(); // Start the timer loop
 
         DOM.startStopBtn.textContent = 'Stop';
