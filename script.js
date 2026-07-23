@@ -353,21 +353,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // =========================================================================
         // == ASYNCHRONOUS SETUP
         // =========================================================================
-        // Now that all synchronous unlocks are done, we can safely await the promises.
-        await resumePromise.catch(e => console.error("AudioContext resume promise failed:", e)); // Catch potential errors
+        try {
+            // Now that all synchronous unlocks are done, we can safely await the promises.
+            await resumePromise;
 
-        // Load the actual metronome sounds.
-        await initAudio();
+            // Load the actual metronome sounds.
+            await initAudio();
 
-        // Request a screen wake lock to keep the device awake.
-        if ('wakeLock' in navigator) {
-            try {
+            // Request a screen wake lock to keep the device awake.
+            if ('wakeLock' in navigator) {
                 State.wakeLockSentinel = await navigator.wakeLock.request('screen');
                 console.log('Screen Wake Lock is active.');
-            } catch (err) {
-                console.error(`Wake Lock request failed: ${err.name}, ${err.message}`);
             }
+        } catch (err) {
+            console.error('Failed during async setup, stopping metronome.', err);
+            // If any of the async setup fails (e.g., audio files don't load),
+            // we should not proceed. Call stop() to reset the UI to a clean state.
+            stop();
+            return; // Exit the start function.
         }
+
 
         // =========================================================================
         // == START THE METRONOME
