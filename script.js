@@ -312,29 +312,26 @@ document.addEventListener('DOMContentLoaded', () => {
             State.audioBuffers.standard = null;
         }
 
-        let needsUnlocking = false;
-        // Create a new AudioContext if one doesn't exist. This is crucial for
-        // autoplay policies.
+        // Create or resume the AudioContext. This must be done in a user gesture.
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            needsUnlocking = true;
         }
 
+        // It's possible the context is still suspended (e.g., on first load)
         if (audioContext.state === 'suspended') {
             await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
-            needsUnlocking = true;
         }
 
         // On iOS, the mute switch can only be bypassed by playing a sound inside a user
-        // gesture. We play a tiny silent buffer through the Web Audio API itself to
-        // "claim" the audio session. This is done when the context is first created or resumed.
-        if (needsUnlocking) {
-            const buffer = audioContext.createBuffer(1, 1, 22050);
-            const source = audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContext.destination);
-            source.start();
-        }
+        // gesture. We play a tiny silent buffer through the Web Audio API every time
+        // start is called to "claim" the audio session and prevent the OS from silencing it.
+        // This is the most reliable way to ensure audio plays even if the hardware mute is on.
+        const buffer = audioContext.createBuffer(1, 1, 22050);
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+
         // Ensure audio samples are loaded before starting the metronome.
         await initAudio();
 
