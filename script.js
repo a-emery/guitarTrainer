@@ -313,7 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // reliable to discard it and create a new one.
         if (audioContext && audioContext.state === 'suspended') {
             console.log('Found suspended AudioContext. Discarding and creating a new one for reliability.');
-            await audioContext.close(); // Asynchronously close the old one before creating a new one.
+            // DO NOT AWAIT here. Awaiting breaks the synchronous chain needed for the user gesture.
+            // We can fire-and-forget the close() call and proceed synchronously.
+            audioContext.close();
             audioContext = null;
             // The audio buffers are now invalid, as they belonged to the old context.
             State.audioBuffers.accent = null;
@@ -351,8 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // =========================================================================
         // == ASYNCHRONOUS SETUP
         // =========================================================================
-        // Now that all synchronous unlocks are done, we can await the promises.
-        await resumePromise;
+        // Now that the synchronous unlock sequence is complete, we can safely await the promises.
+        await resumePromise.catch(e => console.error("AudioContext resume promise failed:", e));
 
         // Load the actual metronome sounds.
         await initAudio();
