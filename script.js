@@ -309,6 +309,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // to reliably get permission to play audio and bypass the mute switch.
 
         // 1. Create AudioContext if it doesn't exist.
+        // As a progressive enhancement, first try the modern Audio Session API.
+        // This is the ideal, declarative way to handle this, but it's not supported on iOS Safari yet.
+        // On supporting browsers, this may be all that's needed.
+        if ('audioSession' in navigator) {
+            navigator.audioSession.type = 'playback';
+        }
+
         // If the context exists but is suspended (from tab backgrounding), it's most
         // reliable to discard it and create a new one.
         if (audioContext && audioContext.state === 'suspended') {
