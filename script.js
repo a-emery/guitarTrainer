@@ -540,10 +540,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('visibilitychange', () => {
-            // When the tab is hidden, stop the metronome if it's running.
-            // This prevents timer drift and also releases the wake lock.
             if (document.visibilityState === 'hidden' && State.isRunning) {
+                // When the tab is hidden, stop the metronome if it's running.
+                // This prevents timer drift and also releases the wake lock.
                 stop();
+            } else if (document.visibilityState === 'visible') {
+                // Refresh the page when returning to the tab to ensure a clean state.
+                window.location.reload();
             }
         });
     }
