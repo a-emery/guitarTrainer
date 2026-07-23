@@ -304,6 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audioContext && audioContext.state === 'suspended') {
             await audioContext.close();
             audioContext = null;
+            // Invalidate buffers; they belonged to the old, closed context.
+            State.audioBuffers.accent = null;
+            State.audioBuffers.standard = null;
         }
 
         // Create a new AudioContext if one doesn't exist. This is crucial for
