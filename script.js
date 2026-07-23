@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accent: null,
             standard: null
         },
+        audioPrimed: false,
     };
 
     // =================================================================================
@@ -126,6 +127,33 @@ document.addEventListener('DOMContentLoaded', () => {
             updateFretboardDisplay();
         } else if (activeTabId === 'numbers-tab-content') {
             updateNumbersDisplay();
+        }
+    }
+
+    /**
+     * Primes the audio session on iOS to allow playback even when the hardware
+     * mute switch is engaged. This works by playing a tiny, silent audio file
+     * through an HTML <audio> element. This tricks iOS into categorizing the
+     * web app's audio as "media" rather than "ambient".
+     */
+    function primeSilentAudio() {
+        if (State.audioPrimed) return;
+
+        const silentAudio = document.createElement('audio');
+        // These attributes are hints for iOS.
+        silentAudio.setAttribute('x-webkit-airplay', 'deny');
+        silentAudio.setAttribute('playsinline', '');
+        // A base64 encoded silent WAV file.
+        silentAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+        silentAudio.style.display = 'none';
+        document.body.appendChild(silentAudio);
+
+        const playPromise = silentAudio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.warn("Silent audio priming failed. Mute switch may still be active.", error);
+            }).finally(() => State.audioPrimed = true);
         }
     }
 
@@ -314,6 +342,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
+
+        // On iOS, playing a silent audio element can move the web app's audio
+        // session to a non-respect-mute category. This should be called after
+        // the audio context is known to exist.
+        primeSilentAudio();
+
         if (audioContext.state === 'suspended') {
             await audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
         }
