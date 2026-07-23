@@ -102,10 +102,16 @@ body {
     align-items: center;
     transition: background-color 0.1s;
     cursor: pointer;
+    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .beat-dot.active {
     background-color: #4adf8e;
+}
+
+.beat-dot:not(:first-child):active {
+    /* Provide feedback for non-accent dots, which have no other function */
+    background-color: #444;
 }
 
 .accent-caret {
@@ -172,12 +178,18 @@ label[for="tempo-slider"] {
     padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 .note-type-btn.active {
     background-color: #4adf8e;
     color: #121212;
     font-weight: bold;
+}
+
+.note-type-btn:active {
+    /* Darken non-active buttons on press */
+    background-color: #444;
 }
 
 #start-stop-btn {
@@ -191,10 +203,16 @@ label[for="tempo-slider"] {
     cursor: pointer;
     transition: background-color 0.2s;
     width: 100%;
+    touch-action: manipulation;
 }
 
 #start-stop-btn.running {
     background-color: #ff4d4d;
+}
+
+#start-stop-btn:active {
+    /* Provide instant feedback on tap */
+    filter: brightness(0.8);
 }
 
 #tab-nav {
@@ -216,11 +234,16 @@ label[for="tempo-slider"] {
     cursor: pointer;
     transition: color 0.2s;
     border-bottom: 3px solid transparent;
+    touch-action: manipulation;
 }
 
 .tab-btn.active {
     color: #4adf8e;
     border-bottom-color: #4adf8e;
+}
+
+.tab-btn:active {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 #global-controls {
@@ -291,6 +314,7 @@ label[for="tempo-slider"] {
     cursor: pointer;
     padding: 0;
     transition: all 0.2s;
+    touch-action: manipulation;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,6 +370,7 @@ label[for="tempo-slider"] {
     color: #a0a0a0;
     font-size: 30px;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 .overlay-content h2 {

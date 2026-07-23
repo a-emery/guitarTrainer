@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
         FLAT_CHROMATIC_SCALE:  ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
         MAJOR_SCALE_INTERVALS: [0, 2, 4, 5, 7, 9, 11],
     };
+    const SCHEDULER_LOOKAHEAD_MS = 25.0; // How often we check for upcoming notes
+    const SCHEDULE_AHEAD_TIME_SEC = 0.1; // How far ahead to schedule audio
 
     // =================================================================================
     // STATE
@@ -96,6 +98,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return scale;
     }
 
+    function getMajorScaleChord(note, degree) {
+        // In a major key, the 2nd, 3rd, and 6th degrees are minor.
+        if ([2, 3, 6].includes(degree)) {
+            return note + 'm';
+        }
+        // The 7th degree is diminished.
+        if (degree === 7) {
+            return note + '°';
+        }
+        return note; // Major chord (or just the root note)
+    }
     function populateCheatSheet(key) {
         const scale = getMajorScale(key);
         if (scale.length === 0) {
@@ -106,17 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let listHtml = '';
         for (let i = 0; i < 7; i++) {
             const number = i + 1;
-            let chord = scale[i];
-
-            // In a major key, the 2nd, 3rd, and 6th degrees are minor.
-            if ([2, 3, 6].includes(number)) {
-                chord += 'm';
-            }
-            // The 7th degree is diminished.
-            else if (number === 7) {
-                chord += '°';
-            }
-            listHtml += `<li><span>${number}</span> <span>${chord}</span></li>`;
+            const chord = getMajorScaleChord(scale[i], number);
+            listHtml += `<li><span>${number}</span> <span>${getMajorScaleChord(scale[i], number)}</span></li>`;
         }
         DOM.cheatSheetList.innerHTML = listHtml;
     }
@@ -185,46 +189,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function playSound(accent) {
+    function playSound(accent, time) {
         const buffer = accent ? State.audioBuffers.accent : State.audioBuffers.standard;
         if (!buffer || !audioContext) return;
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.connect(audioContext.destination);
-        source.start(0);
+        source.start(time);
     }
 
     // =================================================================================
     // METRONOME
     // =================================================================================
 
-    // This function uses a self-adjusting timer to stay accurate.
-    // It's more reliable than a simple recursive setTimeout on its own,
-    // especially on mobile browsers which can throttle timers.
-    function schedule() {
-        if (!State.isRunning) return;
+    /**
+     * Schedules the visual updates (beat dots, display changes) to sync with the
+     * precise timing of the Web Audio API.
+     */
+    function scheduleVisualUpdate(beat, time) {
+        const visualDelay = (time - audioContext.currentTime) * 1000;
+        setTimeout(() => {
+            // Don't run if the metronome was stopped since this was scheduled
+            if (!State.isRunning) return;
+            updateVisuals(beat);
+            if (beat === 0) {
+                handleFirstBeatUpdates();
+            }
+        }, visualDelay);
+    }
 
-        // The core logic of a beat
-        const isFirstBeat = State.currentBeat === 0;
-        playSound(isFirstBeat && State.accentEnabled);
-        updateVisuals(State.currentBeat);
+    /**
+     * The core scheduler loop. It runs on a frequent interval and schedules
+     * audio and visual events in advance, relying on the highly accurate
+     * AudioContext clock.
+     */
+    function schedulerLoop() {
+        const interval = 60.0 / State.tempo;
+        // Check for notes that need to be scheduled in the immediate future
+        while (State.nextBeatTime < audioContext.currentTime + SCHEDULE_AHEAD_TIME_SEC) {
+            const isFirstBeat = State.currentBeat === 0;
+            // Schedule the audio to play at a precise time
+            playSound(isFirstBeat && State.accentEnabled, State.nextBeatTime);
+            // Schedule the corresponding visual update
+            scheduleVisualUpdate(State.currentBeat, State.nextBeatTime);
 
-        if (isFirstBeat) {
-            handleFirstBeatUpdates();
+            // Advance the clock and beat counter for the next iteration
+            State.nextBeatTime += interval;
+            State.currentBeat = (State.currentBeat + 1) % 4;
         }
-
-        // Advance beat counter for the next beat
-        State.currentBeat = (State.currentBeat + 1) % 4;
-
-        // The self-adjusting part
-        const interval = (60 / State.tempo) * 1000;
-        // Use performance.now() for a reliable, monotonic clock that is not affected
-        // by audio context suspension or system time changes.
-        const drift = performance.now() - State.nextBeatTime;
-        State.nextBeatTime += interval;
-
-        // The new timeout is the interval minus the drift.
-        State.scheduler = setTimeout(schedule, interval - drift);
     }
 
     function updateVisuals(beat) {
@@ -284,16 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (State.previousNashvilleNumber !== null) {
             DOM.answerNumberDisplay.textContent = State.previousNashvilleNumber;
 
-            let displayChord = State.previousNashvilleChord;
-            // In a major key, the 2nd, 3rd, and 6th degrees are minor.
-            if ([2, 3, 6].includes(State.previousNashvilleNumber)) {
-                displayChord += 'm';
-            }
-            // The 7th degree is diminished.
-            else if (State.previousNashvilleNumber === 7) {
-                displayChord += '°';
-            }
-
+            const displayChord = getMajorScaleChord(State.previousNashvilleChord, State.previousNashvilleNumber);
             DOM.answerChordDisplay.textContent = displayChord;
         }
     }
@@ -376,8 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         State.currentBeat = 0;
         // Use performance.now() for a reliable, monotonic clock.
-        State.nextBeatTime = performance.now();
-        schedule(); // Start the timer loop
+        State.nextBeatTime = audioContext.currentTime;
+        State.scheduler = setInterval(schedulerLoop, SCHEDULER_LOOKAHEAD_MS);
 
         DOM.startStopBtn.textContent = 'Stop';
         DOM.startStopBtn.classList.add('running');
@@ -387,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!State.isRunning) return;
         State.isRunning = false;
 
-        clearTimeout(State.scheduler);
+        clearInterval(State.scheduler);
 
         // Release the screen wake lock if it was acquired.
         if (State.wakeLockSentinel) {
@@ -410,6 +413,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION
     // =================================================================================
 
+    function saveSettings() {
+        const settings = {
+            tempo: State.tempo,
+            noteType: State.noteType,
+            accentEnabled: State.accentEnabled,
+            currentKey: State.currentKey
+        };
+        localStorage.setItem('guitarTrainerSettings', JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+        const savedSettings = localStorage.getItem('guitarTrainerSettings');
+        if (!savedSettings) return;
+
+        const settings = JSON.parse(savedSettings);
+
+        // Tempo (default to 120)
+        State.tempo = settings.tempo || 120;
+        DOM.tempoSlider.value = State.tempo;
+        DOM.tempoValue.textContent = State.tempo;
+
+        // Note Type (default to naturals)
+        State.noteType = settings.noteType || 'naturals';
+        DOM.noteTypeButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === State.noteType);
+        });
+
+        // Accent (default to true)
+        State.accentEnabled = settings.accentEnabled !== false;
+        DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
+
+        // Key (default to C)
+        State.currentKey = settings.currentKey || 'C';
+        DOM.keySelector.value = State.currentKey;
+    }
+
     function bindEventListeners() {
         DOM.startStopBtn.addEventListener('click', () => {
             if (State.isRunning) {
@@ -422,6 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.tempoSlider.addEventListener('input', (e) => {
             State.tempo = e.target.value;
             DOM.tempoValue.textContent = State.tempo;
+            saveSettings();
         });
 
         DOM.noteTypeButtons.forEach(button => {
@@ -429,16 +469,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 DOM.noteTypeButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 State.noteType = button.dataset.type;
+                saveSettings();
             });
         });
 
         DOM.beatDots[0].addEventListener('click', () => {
             State.accentEnabled = !State.accentEnabled;
             DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
+            saveSettings();
         });
 
         DOM.keySelector.addEventListener('change', (e) => {
             State.currentKey = e.target.value;
+            saveSettings();
         });
 
         DOM.tabs.forEach(tab => {
@@ -492,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function init() {
+        loadSettings();
         bindEventListeners();
 
         // Check for tab in URL on page load and switch to it
