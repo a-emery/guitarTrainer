@@ -349,7 +349,7 @@ body {
 .timer-controls {
     flex-direction: column;
     justify-content: space-between;
-    align-items: stretch;
+    align-items: center;
     width: 100%;
     gap: 20px;
 }
@@ -362,8 +362,6 @@ body {
 }
 
 .timer-duration-group {
-    flex-grow: 1;
-    justify-content: space-between;
 }
 
 .timer-inputs {
@@ -647,11 +645,4 @@ input:checked + .slider:before {
         padding-bottom: 20px; /* Remove safe-area padding on desktop */
     }
 
-}
-
-@media (max-width: 380px) {
-    .timer-duration-group {
-        width: 100%;
-        justify-content: space-between;
-    }
 }
