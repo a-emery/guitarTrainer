@@ -12,16 +12,14 @@ export async function initAudio() {
         return; // Already loaded
     }
 
-    try {
-        // Load both samples in parallel for efficiency
-        [State.audioBuffers.accent, State.audioBuffers.standard] = await Promise.all([
-            loadAudioSample('accent.wav'),
-            loadAudioSample('normal.wav')
-        ]);
-        console.log('Audio samples loaded and decoded.');
-    } catch (e) {
-        console.error('Error loading audio samples:', e);
-    }
+    // Load both samples in parallel for efficiency.
+    // Let this throw on failure; the error will be caught by the `startMetronome`
+    // function, which will prevent the metronome from entering a broken state.
+    [State.audioBuffers.accent, State.audioBuffers.standard] = await Promise.all([
+        loadAudioSample('accent.wav'),
+        loadAudioSample('normal.wav')
+    ]);
+    console.log('Audio samples loaded and decoded.');
 }
 
 export function playSound(accent, time) {
