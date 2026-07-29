@@ -347,25 +347,45 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    flex-wrap: wrap;
+    row-gap: 20px;
+}
+
+.timer-toggle-group,
+.timer-duration-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.timer-duration-group {
+    flex-grow: 1;
+    justify-content: flex-end;
 }
 
 .timer-inputs {
     display: flex;
-    align-items: center;
-    gap: 5px;
+    align-items: baseline;
+    gap: 8px;
 }
 
 .timer-controls input[type="number"] {
-    background-color: #1e1e1e;
+    background-color: transparent;
     color: #fff;
-    border: 1px solid #4adf8e;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 16px;
-    width: 45px;
-    text-align: right;
-    padding-right: 5px;
+    border: none;
+    border-bottom: 2px solid #444;
+    padding: 5px 0;
+    border-radius: 0;
+    font-size: 18px;
+    width: 35px;
+    text-align: center;
     -moz-appearance: textfield; /* Firefox */
+    transition: border-color 0.2s;
+}
+
+.timer-controls input[type="number"]:focus {
+    outline: none;
+    border-color: #4adf8e;
 }
 
 /* Hide number input arrows for Chrome, Safari, Edge */
@@ -375,8 +395,9 @@ body {
     margin: 0;
 }
 
-.timer-controls > span {
+.timer-inputs span {
     color: #a0a0a0;
+    font-size: 14px;
 }
 
 .control-btn {
@@ -623,4 +644,16 @@ input:checked + .slider:before {
         padding-bottom: 20px; /* Remove safe-area padding on desktop */
     }
 
+    /* On larger screens, prevent the timer duration group from wrapping */
+    .timer-controls {
+        flex-wrap: nowrap;
+    }
+
+}
+
+@media (max-width: 380px) {
+    .timer-duration-group {
+        width: 100%;
+        justify-content: space-between;
+    }
 }

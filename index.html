@@ -104,18 +104,22 @@
                     <input type="range" id="tempo-slider" min="40" max="240" value="120">
                 </div>
                 <div class="control-group timer-controls">
-                    <label class="switch-label" for="timer-enable-switch">Timer</label>
-                    <label class="switch">
-                        <input type="checkbox" id="timer-enable-switch">
-                        <span class="slider"></span>
-                    </label>
-                    <div class="timer-inputs">
-                        <input type="number" id="timer-minutes-input" min="0" max="60" value="5">
-                        <span>min</span>
-                        <input type="number" id="timer-seconds-input" min="0" max="59" value="0">
-                        <span>sec</span>
+                    <div class="timer-toggle-group">
+                        <label class="switch-label" for="timer-enable-switch">Timer</label>
+                        <label class="switch">
+                            <input type="checkbox" id="timer-enable-switch">
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <button id="reset-timer-btn" class="control-btn" disabled>Reset</button>
+                    <div class="timer-duration-group">
+                        <div class="timer-inputs">
+                            <input type="number" id="timer-minutes-input" min="0" max="60" value="5">
+                            <span>min</span>
+                            <input type="number" id="timer-seconds-input" min="0" max="59" value="0">
+                            <span>sec</span>
+                        </div>
+                        <button id="reset-timer-btn" class="control-btn" disabled>Reset</button>
+                    </div>
                 </div>
             </div>
         </div>
