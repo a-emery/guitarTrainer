@@ -2,21 +2,17 @@ import { DOM } from './config.js';
 import { State } from './state.js';
 import { updateTimerDisplay, showTimerCompletePopup } from './ui.js';
 
-let startMetronome;
 let stopMetronome;
 let saveSettings;
 
 export function initializeTimer(controls) {
-    startMetronome = controls.startMetronome;
     stopMetronome = controls.stopMetronome;
     saveSettings = controls.saveSettings;
 }
 
-export function startTimer() {
-    if (State.isTimerRunning) return;
-
+export function activateTimer() {
     State.isTimerRunning = true;
-    State.timerEndsMetronome = true; // Timer is now controlling the metronome
+    DOM.timerCompactDisplay.classList.remove('hidden');
 
     // Ensure timer duration is valid
     State.timerDuration = parseInt(DOM.timerInput.value, 10);
@@ -27,13 +23,6 @@ export function startTimer() {
 
     State.timeRemaining = State.timerDuration * 60;
     updateTimerDisplay(State.timeRemaining);
-
-    // Start the metronome
-    startMetronome();
-
-    DOM.timerInput.disabled = true;
-    DOM.startTimerBtn.disabled = true;
-    DOM.stopTimerBtn.disabled = false;
     DOM.resetTimerBtn.disabled = false;
 
     State.timerInterval = setInterval(() => {
@@ -41,45 +30,49 @@ export function startTimer() {
         updateTimerDisplay(State.timeRemaining);
 
         if (State.timeRemaining <= 0) {
-            stopTimer(true); // Timer finished, stop metronome
+            // Timer finished on its own
+            clearInterval(State.timerInterval);
+            State.isTimerRunning = false;
+            stopMetronome(); // This will also call deactivateTimer
             showTimerCompletePopup();
         }
     }, 1000);
-    saveSettings();
 }
 
-export function stopTimer(timerFinished = false) {
-    if (!State.isTimerRunning && !timerFinished) return; // Only return if not running and not a completion event
-
+export function deactivateTimer() {
+    if (!State.isTimerRunning) return;
     clearInterval(State.timerInterval);
     State.isTimerRunning = false;
-
-    DOM.timerInput.disabled = false;
-    DOM.startTimerBtn.disabled = false;
-    DOM.stopTimerBtn.disabled = true;
-    DOM.resetTimerBtn.disabled = false;
-
-    if (State.timerEndsMetronome) {
-        stopMetronome(); // Stop the metronome if the timer started it
-    }
-    State.timerEndsMetronome = false; // Reset this flag
-    saveSettings();
+    DOM.timerCompactDisplay.classList.add('hidden');
 }
 
 export function resetTimer() {
-    stopTimer(false); // Stop timer if running
+    // This can be called when the metronome is stopped.
+    // It just resets the timer value.
+    if (State.isRunning) return; // Don't reset while running
+
     const newDuration = parseInt(DOM.timerInput.value, 10) || 1;
     State.timerDuration = newDuration;
     State.timeRemaining = newDuration * 60;
     updateTimerDisplay(State.timeRemaining);
-    DOM.resetTimerBtn.disabled = true; // Disable reset until timer starts again
+    DOM.resetTimerBtn.disabled = true;
     saveSettings();
 }
 
 export function handleTimerInputChange() {
+    if (State.isTimerRunning) return; // Don't allow change while timer is active
     const newDuration = parseInt(DOM.timerInput.value, 10) || 1;
     State.timerDuration = newDuration;
     State.timeRemaining = newDuration * 60;
     updateTimerDisplay(State.timeRemaining);
+    saveSettings();
+}
+
+export function handleTimerEnableChange(isEnabled) {
+    State.isTimerEnabled = isEnabled;
+    DOM.timerCompactDisplay.classList.toggle('hidden', !isEnabled || !State.isRunning);
+    if (isEnabled) {
+        updateTimerDisplay(State.timeRemaining);
+    }
     saveSettings();
 }

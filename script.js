@@ -2,8 +2,8 @@ import { DOM, SCHEDULER_LOOKAHEAD_MS } from './js/config.js';
 import { State, audioContext, setAudioContext } from './js/state.js';
 import { initAudio } from './js/audio.js';
 import { schedulerLoop } from './js/metronome.js';
-import { initializeTimer, startTimer, stopTimer, resetTimer, handleTimerInputChange } from './js/timer.js';
-import { switchTab, populateCheatSheet, updateTimerDisplay, showTimerCompletePopup, hideTimerCompletePopup } from './js/ui.js';
+import { initializeTimer, activateTimer, deactivateTimer, resetTimer, handleTimerInputChange, handleTimerEnableChange } from './js/timer.js';
+import { switchTab, populateCheatSheet, updateTimerDisplay, hideTimerCompletePopup } from './js/ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // =================================================================================
@@ -98,15 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // =========================================================================
         State.isRunning = true;
 
-        if (!State.isTimerRunning) {
-            State.timerEndsMetronome = false; // Metronome started independently
-        }
-
         // Reset displays and state for a clean start
         State.currentNashvilleNumber = null;
         DOM.currentNumberDisplay.textContent = '--';
         DOM.answerNumberDisplay.textContent = '--';
         DOM.answerChordDisplay.textContent = '--';
+
+        if (State.isTimerEnabled) {
+            activateTimer();
+        }
 
         State.currentBeat = 0;
         State.nextBeatTime = audioContext.currentTime;
@@ -119,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopMetronome() {
         if (!State.isRunning) return;
         State.isRunning = false;
+
+        deactivateTimer(); // This will only run if timer was running
+
         clearInterval(State.scheduler);
 
         // Release the screen wake lock if it was acquired.
@@ -136,7 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         DOM.startStopBtn.textContent = 'Start';
         DOM.startStopBtn.classList.remove('running');
-        State.timerEndsMetronome = false; // Reset this flag
     }
 
     // =================================================================================
@@ -150,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accentEnabled: State.accentEnabled,
             currentKey: State.currentKey,
             timerDuration: State.timerDuration,
+            isTimerEnabled: State.isTimerEnabled,
         };
         localStorage.setItem('guitarTrainerSettings', JSON.stringify(settings));
     }
@@ -179,24 +182,23 @@ document.addEventListener('DOMContentLoaded', () => {
         State.currentKey = settings.currentKey || 'C';
         DOM.keySelector.value = State.currentKey;
 
+        // Timer Enabled (default to false)
+        State.isTimerEnabled = settings.isTimerEnabled || false;
+        DOM.timerEnableSwitch.checked = State.isTimerEnabled;
+
         // Timer Duration (default to 5 minutes)
         State.timerDuration = settings.timerDuration || 5;
         DOM.timerInput.value = State.timerDuration;
-        updateTimerDisplay(State.timerDuration * 60); // Initialize display
+        State.timeRemaining = State.timerDuration * 60;
+        updateTimerDisplay(State.timeRemaining); // Initialize display
     }
 
     function bindEventListeners() {
-        initializeTimer({ startMetronome, stopMetronome, saveSettings });
+        initializeTimer({ stopMetronome, saveSettings });
 
         DOM.startStopBtn.addEventListener('click', () => {
             if (State.isRunning) {
-                // If the timer is running, stopping the metronome should be handled by stopping the timer.
-                // If the metronome is running alone, just stop it.
-                if (State.isTimerRunning) {
-                    stopTimer(false);
-                } else {
-                    stopMetronome();
-                }
+                stopMetronome();
             } else {
                 startMetronome(); // No need to await here, let it run
             }
@@ -231,9 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 // Stop the metronome and reset state before switching tabs
-                if (State.isTimerRunning) {
-                    stopTimer(false);
-                } else if (State.isRunning) {
+                if (State.isRunning) {
                     stopMetronome();
                 }
 
@@ -274,22 +274,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Timer Event Listeners
-        DOM.startTimerBtn.addEventListener('click', startTimer);
-        DOM.stopTimerBtn.addEventListener('click', () => stopTimer(false)); // Pass false for timerFinished
+        DOM.timerEnableSwitch.addEventListener('change', (e) => {
+            handleTimerEnableChange(e.target.checked);
+        });
         DOM.resetTimerBtn.addEventListener('click', resetTimer);
         DOM.timerInput.addEventListener('change', handleTimerInputChange);
         DOM.closeTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
         DOM.okTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
 
+        DOM.expandControlsBtn.addEventListener('click', () => {
+            DOM.globalControls.classList.toggle('expanded');
+        });
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && State.isRunning) {
                 // When the tab is hidden, stop the metronome if it's running.
                 // This prevents timer drift and also releases the wake lock.
-                if (State.isTimerRunning) {
-                    stopTimer(false);
-                } else {
-                    stopMetronome();
-                }
+                stopMetronome();
             } else if (document.visibilityState === 'visible') {
                 // Refresh the page when returning to the tab to ensure a clean state.
                 // For a timer, reloading is too aggressive. Let's just ensure state is consistent.
@@ -309,8 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Initial timer button state
-        DOM.stopTimerBtn.disabled = true;
         DOM.resetTimerBtn.disabled = true;
+        if (State.isTimerEnabled) {
+            DOM.timerCompactDisplay.classList.remove('hidden');
+        }
 
     }
 

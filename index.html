@@ -79,25 +79,38 @@
         </div>
 
         <div id="global-controls">
-            <div id="metronome">
-                <div class="beat-dot" id="beat-1"><span class="accent-caret">^</span></div>
-                <div class="beat-dot" id="beat-2"></div>
-                <div class="beat-dot" id="beat-3"></div>
-                <div class="beat-dot" id="beat-4"></div>
-            </div>
-            <div class="control-group">
-                <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
-                <input type="range" id="tempo-slider" min="40" max="240" value="120">
-            </div>
-            <div class="control-group timer-controls">
-                <label for="timer-input">Timer: <span id="timer-display">00:00</span></label>
-                <div class="timer-input-group">
-                    <input type="number" id="timer-input" min="1" max="60" value="5">
-                    <span>minutes</span>
+            <div id="compact-controls">
+                <div id="metronome">
+                    <div class="beat-dot" id="beat-1"><span class="accent-caret">^</span></div>
+                    <div class="beat-dot" id="beat-2"></div>
+                    <div class="beat-dot" id="beat-3"></div>
+                    <div class="beat-dot" id="beat-4"></div>
                 </div>
-                <div class="timer-buttons">
-                    <button id="start-timer-btn" class="control-btn">Start Timer</button>
-                    <button id="stop-timer-btn" class="control-btn" disabled>Stop Timer</button>
+                <div class="compact-display">
+                    <div id="bpm-display">
+                        <span id="tempo-value">120</span> BPM
+                    </div>
+                    <div id="timer-compact-display" class="hidden">
+                        <span id="timer-display">00:00</span>
+                    </div>
+                </div>
+                <button id="expand-controls-btn" class="icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z"/></svg>
+                </button>
+            </div>
+            <div id="full-controls">
+                <div class="control-group">
+                    <label for="tempo-slider">Tempo</label>
+                    <input type="range" id="tempo-slider" min="40" max="240" value="120">
+                </div>
+                <div class="control-group timer-controls">
+                    <label class="switch-label" for="timer-enable-switch">Timer</label>
+                    <label class="switch">
+                        <input type="checkbox" id="timer-enable-switch">
+                        <span class="slider"></span>
+                    </label>
+                    <input type="number" id="timer-input" min="1" max="60" value="5">
+                    <span>min</span>
                     <button id="reset-timer-btn" class="control-btn" disabled>Reset</button>
                 </div>
             </div>
