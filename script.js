@@ -268,7 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         DOM.resetTimerBtn.addEventListener('click', resetTimer);
         DOM.timerMinutesInput.addEventListener('change', handleTimerInputChange);
+        DOM.timerMinutesInput.addEventListener('focus', (e) => e.target.select());
         DOM.timerSecondsInput.addEventListener('change', handleTimerInputChange);
+        DOM.timerSecondsInput.addEventListener('focus', (e) => e.target.select());
         DOM.closeTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
         DOM.okTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
 
