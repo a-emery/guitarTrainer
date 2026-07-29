@@ -9,6 +9,10 @@ export const State = {
     currentBeat: 0,
     tempo: 120,
     isRunning: false,
+    isTimerRunning: false,
+    timerDuration: 5, // Default to 5 minutes
+    timeRemaining: 0,
+    timerInterval: null,
     nextBeatTime: 0.0, // For self-adjusting timer
     accentEnabled: true,
     noteType: 'naturals',
@@ -17,6 +21,7 @@ export const State = {
     currentKey: 'C',
     currentNashvilleNumber: null,
     previousNashvilleNumber: null,
+    timerEndsMetronome: false, // Indicates if the metronome was started by the timer
     previousNashvilleChord: null,
     wakeLockSentinel: null,
     audioBuffers: {

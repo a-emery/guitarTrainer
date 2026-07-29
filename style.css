@@ -274,6 +274,59 @@ label[for="tempo-slider"] {
     flex-grow: 1;
 }
 
+.timer-controls {
+    margin-top: 15px;
+    border-top: 1px solid #333;
+    padding-top: 15px;
+}
+
+.timer-input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+#timer-input {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #4adf8e;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 60px;
+    text-align: center;
+    -moz-appearance: textfield; /* Firefox */
+}
+
+/* Hide number input arrows for Chrome, Safari, Edge */
+#timer-input::-webkit-outer-spin-button,
+#timer-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.timer-input-group span {
+    color: #a0a0a0;
+}
+
+.timer-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.control-btn {
+    background-color: #4adf8e;
+    color: #121212;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
 #answer-display-container .display {
     width: 75px;
     height: 75px;

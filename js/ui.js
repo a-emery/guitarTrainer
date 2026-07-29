@@ -104,3 +104,18 @@ export function handleFirstBeatUpdates() {
         updateNumbersDisplay();
     }
 }
+
+export function updateTimerDisplay(timeInSeconds) {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    DOM.timerDisplay.textContent =
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+export function showTimerCompletePopup() {
+    DOM.timerCompleteOverlay.classList.remove('hidden');
+}
+
+export function hideTimerCompletePopup() {
+    DOM.timerCompleteOverlay.classList.add('hidden');
+}

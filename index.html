@@ -89,6 +89,18 @@
                 <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
                 <input type="range" id="tempo-slider" min="40" max="240" value="120">
             </div>
+            <div class="control-group timer-controls">
+                <label for="timer-input">Timer: <span id="timer-display">00:00</span></label>
+                <div class="timer-input-group">
+                    <input type="number" id="timer-input" min="1" max="60" value="5">
+                    <span>minutes</span>
+                </div>
+                <div class="timer-buttons">
+                    <button id="start-timer-btn" class="control-btn">Start Timer</button>
+                    <button id="stop-timer-btn" class="control-btn" disabled>Stop Timer</button>
+                    <button id="reset-timer-btn" class="control-btn" disabled>Reset</button>
+                </div>
+            </div>
         </div>
         <button id="start-stop-btn">Start</button>
 
@@ -114,6 +126,15 @@
                     </select>
                 </div>
                 <ul id="cheat-sheet-list"></ul>
+            </div>
+        </div>
+
+        <div id="timer-complete-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button id="close-timer-complete-btn" class="close-btn">&times;</button>
+                <h2>Timer Completed!</h2>
+                <p>Your practice session has ended.</p>
+                <button id="ok-timer-complete-btn" class="control-btn">OK</button>
             </div>
         </div>
     </div>

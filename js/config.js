@@ -21,8 +21,16 @@ export const DOM = {
     openCheatSheetBtn: document.getElementById('open-cheat-sheet-btn'),
     cheatSheetOverlay: document.getElementById('cheat-sheet-overlay'),
     closeOverlayBtn: document.getElementById('close-overlay-btn'),
+    timerInput: document.getElementById('timer-input'),
+    timerDisplay: document.getElementById('timer-display'),
+    startTimerBtn: document.getElementById('start-timer-btn'),
+    stopTimerBtn: document.getElementById('stop-timer-btn'),
+    resetTimerBtn: document.getElementById('reset-timer-btn'),
     cheatSheetKeySelector: document.getElementById('cheat-sheet-key-selector'),
-    cheatSheetList: document.getElementById('cheat-sheet-list')
+    cheatSheetList: document.getElementById('cheat-sheet-list'),
+    timerCompleteOverlay: document.getElementById('timer-complete-overlay'),
+    closeTimerCompleteBtn: document.getElementById('close-timer-complete-btn'),
+    okTimerCompleteBtn: document.getElementById('ok-timer-complete-btn'),
 };
 
 export const CONSTANTS = {
