@@ -3,6 +3,10 @@ html {
     overflow: hidden; /* Prevents bouncing scroll on mobile */
 }
 
+.hidden {
+    display: none !important; /* Ensure it overrides other display properties */
+}
+
 body {
     background-color: #121212;
     color: #ffffff;

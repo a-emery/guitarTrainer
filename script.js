@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function startMetronome() {
         if (State.isRunning) return; // Metronome is already running
 
+        // Close advanced settings panel if it's open
+        DOM.globalControls.classList.remove('expanded');
+
         // =========================================================================
         // == AUDIO UNLOCK & CONTEXT SETUP (CRITICAL FOR IOS)
         // =========================================================================
@@ -141,49 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.startStopBtn.classList.remove('running');
     }
 
-    // =================================================================================
-    // INITIALIZATION
-    // =================================================================================
-
-    function saveSettings() {
-        const settings = {
-            tempo: State.tempo,
-            noteType: State.noteType,
-            accentEnabled: State.accentEnabled,
-            currentKey: State.currentKey,
-        };
-        localStorage.setItem('guitarTrainerSettings', JSON.stringify(settings));
-    }
-
-    function loadSettings() {
-        const savedSettings = localStorage.getItem('guitarTrainerSettings');
-        if (!savedSettings) return;
-
-        const settings = JSON.parse(savedSettings);
-
-        // Tempo (default to 120)
-        State.tempo = settings.tempo || 120;
-        DOM.tempoSlider.value = State.tempo;
-        DOM.tempoValue.textContent = State.tempo;
-
-        // Note Type (default to naturals)
-        State.noteType = settings.noteType || 'naturals';
-        DOM.noteTypeButtons.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.type === State.noteType);
-        });
-
-        // Accent (default to true)
-        State.accentEnabled = settings.accentEnabled !== false;
-        DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
-
-        // Key (default to C)
-        State.currentKey = settings.currentKey || 'C';
-        DOM.keySelector.value = State.currentKey;
-
-    }
-
     function bindEventListeners() {
-        initializeTimer({ stopMetronome, saveSettings });
+        initializeTimer({ stopMetronome });
 
         DOM.startStopBtn.addEventListener('click', () => {
             if (State.isRunning) {
@@ -196,7 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.tempoSlider.addEventListener('input', (e) => {
             State.tempo = e.target.value;
             DOM.tempoValue.textContent = State.tempo;
-            saveSettings();
         });
 
         DOM.noteTypeButtons.forEach(button => {
@@ -204,19 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 DOM.noteTypeButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 State.noteType = button.dataset.type;
-                saveSettings();
             });
         });
 
         DOM.beatDots[0].addEventListener('click', () => {
             State.accentEnabled = !State.accentEnabled;
             DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
-            saveSettings();
         });
 
         DOM.keySelector.addEventListener('change', (e) => {
             State.currentKey = e.target.value;
-            saveSettings();
         });
 
         DOM.tabs.forEach(tab => {
@@ -270,6 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const handleInputFocus = (e) => {
             e.target.select();
+
+            // If the timer is not already enabled, enable it.
+            if (!State.isTimerEnabled) {
+                DOM.timerEnableSwitch.checked = true;
+                handleTimerEnableChange(true);
+            }
+
             // Delay scrolling to allow the keyboard to animate into view.
             // Without this, the scroll might happen before the viewport has resized.
             setTimeout(() => {
@@ -304,8 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function init() {
-        loadSettings();
         bindEventListeners();
+
+        // Initialize UI elements to match default state, since settings are not persisted.
+        DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
 
         // Check for tab in URL on page load and switch to it
         const urlParams = new URLSearchParams(window.location.search);
@@ -314,17 +281,16 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab(tabId);
         }
 
-        // Initialize timer display to default duration.
+        // Initialize timer state and display.
         // This is done here because we no longer load timer settings.
+        State.isTimerEnabled = false;
         State.timeRemaining = State.timerDuration;
+        DOM.timerEnableSwitch.checked = false;
+        DOM.timerCompactDisplay.classList.add('hidden');
         updateTimerDisplay(State.timeRemaining);
 
         // Initial timer button state
         DOM.resetTimerBtn.disabled = true;
-        if (State.isTimerEnabled) {
-            DOM.timerCompactDisplay.classList.remove('hidden');
-        }
-
     }
 
     init();

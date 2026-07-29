@@ -3,11 +3,9 @@ import { State } from './state.js';
 import { updateTimerDisplay, showTimerCompletePopup } from './ui.js';
 
 let stopMetronome;
-let saveSettings;
 
 export function initializeTimer(controls) {
     stopMetronome = controls.stopMetronome;
-    saveSettings = controls.saveSettings;
 }
 
 export function activateTimer() {
@@ -38,6 +36,9 @@ export function activateTimer() {
             State.isTimerRunning = false;
             stopMetronome(); // This will also call deactivateTimer
             showTimerCompletePopup();
+            // Disable the timer switch after it completes for a "one-shot" feel.
+            handleTimerEnableChange(false);
+            DOM.timerEnableSwitch.checked = false;
         }
     }, 1000);
 }
@@ -65,7 +66,6 @@ export function resetTimer() {
     State.timeRemaining = State.timerDuration;
     updateTimerDisplay(State.timeRemaining);
     DOM.resetTimerBtn.disabled = true;
-    saveSettings();
 }
 
 export function handleTimerInputChange() {
@@ -75,7 +75,6 @@ export function handleTimerInputChange() {
     State.timerDuration = (minutes * 60) + seconds;
     State.timeRemaining = State.timerDuration;
     updateTimerDisplay(State.timeRemaining);
-    saveSettings();
 }
 
 export function handleTimerEnableChange(isEnabled) {
@@ -83,6 +82,12 @@ export function handleTimerEnableChange(isEnabled) {
     DOM.timerCompactDisplay.classList.toggle('hidden', !isEnabled);
     if (isEnabled) {
         updateTimerDisplay(State.timeRemaining);
+    } else {
+        // When disabling, reset the countdown value to match the inputs.
+        const minutes = parseInt(DOM.timerMinutesInput.value, 10) || 0;
+        const seconds = parseInt(DOM.timerSecondsInput.value, 10) || 0;
+        State.timerDuration = (minutes * 60) + seconds;
+        State.timeRemaining = State.timerDuration;
+        updateTimerDisplay(State.timeRemaining);
     }
-    saveSettings();
 }
