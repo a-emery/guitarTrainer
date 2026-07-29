@@ -32,13 +32,10 @@ export function activateTimer() {
 
         if (State.timeRemaining <= 0) {
             // Timer finished on its own
-            clearInterval(State.timerInterval);
-            State.isTimerRunning = false;
-            stopMetronome(); // This will also call deactivateTimer
+            stopMetronome(); // This also calls deactivateTimer to stop the interval
             showTimerCompletePopup();
-            // Disable the timer switch after it completes for a "one-shot" feel.
-            handleTimerEnableChange(false);
-            DOM.timerEnableSwitch.checked = false;
+            // Reset the timer value to what's in the inputs, and keep it enabled.
+            resetTimer();
         }
     }, 1000);
 }
