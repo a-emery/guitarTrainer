@@ -343,12 +343,11 @@ body {
 }
 
 .timer-controls {
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
-    flex-wrap: wrap;
-    row-gap: 20px;
+    gap: 20px;
 }
 
 .timer-toggle-group,
@@ -360,7 +359,7 @@ body {
 
 .timer-duration-group {
     flex-grow: 1;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 .timer-inputs {
@@ -642,11 +641,6 @@ input:checked + .slider:before {
     #start-stop-btn {
         font-size: 22px;
         padding-bottom: 20px; /* Remove safe-area padding on desktop */
-    }
-
-    /* On larger screens, prevent the timer duration group from wrapping */
-    .timer-controls {
-        flex-wrap: nowrap;
     }
 
 }

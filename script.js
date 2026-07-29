@@ -267,10 +267,23 @@ document.addEventListener('DOMContentLoaded', () => {
             handleTimerEnableChange(e.target.checked);
         });
         DOM.resetTimerBtn.addEventListener('click', resetTimer);
+
+        const handleInputFocus = (e) => {
+            e.target.select();
+            // Delay scrolling to allow the keyboard to animate into view.
+            // Without this, the scroll might happen before the viewport has resized.
+            setTimeout(() => {
+                e.target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                });
+            }, 300);
+        };
+
         DOM.timerMinutesInput.addEventListener('change', handleTimerInputChange);
-        DOM.timerMinutesInput.addEventListener('focus', (e) => e.target.select());
+        DOM.timerMinutesInput.addEventListener('focus', handleInputFocus);
         DOM.timerSecondsInput.addEventListener('change', handleTimerInputChange);
-        DOM.timerSecondsInput.addEventListener('focus', (e) => e.target.select());
+        DOM.timerSecondsInput.addEventListener('focus', handleInputFocus);
         DOM.closeTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
         DOM.okTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
 
