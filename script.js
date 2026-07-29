@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 stopMetronome();
             } else if (document.visibilityState === 'visible') {
                 // Refresh the page when returning to the tab to ensure a clean state.
-                // For a timer, reloading is too aggressive. Let's just ensure state is consistent.
+                window.location.reload();
             }
         });
     }
