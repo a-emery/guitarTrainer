@@ -1,6 +1,7 @@
 import { State, audioContext } from './state.js';
 import { SCHEDULE_AHEAD_TIME_SEC } from './config.js';
 import { playSound } from './audio.js';
+import { activateTimer } from './timer.js';
 import { updateVisuals, handleFirstBeatUpdates } from './ui.js';
 
 /**
@@ -25,6 +26,12 @@ function scheduleVisualUpdate(beat, time) {
  * AudioContext clock.
  */
 export function schedulerLoop() {
+    // If the timer is supposed to be running with the metronome, but hasn't been
+    // started yet, start it now. This ensures it only starts when the scheduler is active.
+    if (State.isTimerEnabled && !State.isTimerRunning) {
+        activateTimer();
+    }
+
     const interval = 60.0 / State.tempo;
     // Check for notes that need to be scheduled in the immediate future
     while (State.nextBeatTime < audioContext.currentTime + SCHEDULE_AHEAD_TIME_SEC) {

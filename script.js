@@ -107,10 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.answerNumberDisplay.textContent = '--';
         DOM.answerChordDisplay.textContent = '--';
 
-        if (State.isTimerEnabled) {
-            activateTimer();
-        }
-
         State.currentBeat = 0;
         State.nextBeatTime = audioContext.currentTime;
         State.scheduler = setInterval(schedulerLoop, SCHEDULER_LOOKAHEAD_MS);
