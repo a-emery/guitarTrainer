@@ -49,8 +49,6 @@ export function deactivateTimer() {
 export function resetTimer() {
     // This can be called when the metronome is stopped.
     // It just resets the timer value.
-    if (State.isRunning) return; // Don't reset while running
-
     const minutes = parseInt(DOM.timerMinutesInput.value, 10) || 0;
     const seconds = parseInt(DOM.timerSecondsInput.value, 10) || 0;
     const newDuration = (minutes * 60) + seconds;

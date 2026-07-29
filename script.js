@@ -281,10 +281,20 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab(tabId);
         }
 
-        // Initialize timer state and display.
-        // This is done here because we no longer load timer settings.
+        // Initialize timer state and display, ensuring it's in sync with the inputs.
+        const minutes = parseInt(DOM.timerMinutesInput.value, 10) || 0;
+        const seconds = parseInt(DOM.timerSecondsInput.value, 10) || 0;
+        const initialDuration = (minutes * 60) + seconds;
+
         State.isTimerEnabled = false;
+        State.timerDuration = initialDuration > 0 ? initialDuration : 300;
         State.timeRemaining = State.timerDuration;
+
+        if (initialDuration <= 0) {
+            DOM.timerMinutesInput.value = 5;
+            DOM.timerSecondsInput.value = 0;
+        }
+
         DOM.timerEnableSwitch.checked = false;
         DOM.timerCompactDisplay.classList.add('hidden');
         updateTimerDisplay(State.timeRemaining);
