@@ -151,8 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
             noteType: State.noteType,
             accentEnabled: State.accentEnabled,
             currentKey: State.currentKey,
-            timerDuration: State.timerDuration,
-            isTimerEnabled: State.isTimerEnabled,
         };
         localStorage.setItem('guitarTrainerSettings', JSON.stringify(settings));
     }
@@ -182,15 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
         State.currentKey = settings.currentKey || 'C';
         DOM.keySelector.value = State.currentKey;
 
-        // Timer Enabled (default to false)
-        State.isTimerEnabled = settings.isTimerEnabled || false;
-        DOM.timerEnableSwitch.checked = State.isTimerEnabled;
-
-        // Timer Duration (default to 5 minutes)
-        State.timerDuration = settings.timerDuration || 5;
-        DOM.timerInput.value = State.timerDuration;
-        State.timeRemaining = State.timerDuration * 60;
-        updateTimerDisplay(State.timeRemaining); // Initialize display
     }
 
     function bindEventListeners() {
@@ -278,7 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
             handleTimerEnableChange(e.target.checked);
         });
         DOM.resetTimerBtn.addEventListener('click', resetTimer);
-        DOM.timerInput.addEventListener('change', handleTimerInputChange);
+        DOM.timerMinutesInput.addEventListener('change', handleTimerInputChange);
+        DOM.timerSecondsInput.addEventListener('change', handleTimerInputChange);
         DOM.closeTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
         DOM.okTimerCompleteBtn.addEventListener('click', hideTimerCompletePopup);
 
@@ -308,6 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tabId) {
             switchTab(tabId);
         }
+
+        // Initialize timer display to default duration.
+        // This is done here because we no longer load timer settings.
+        State.timeRemaining = State.timerDuration;
+        updateTimerDisplay(State.timeRemaining);
 
         // Initial timer button state
         DOM.resetTimerBtn.disabled = true;

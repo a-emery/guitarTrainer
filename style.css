@@ -349,21 +349,28 @@ body {
     width: 100%;
 }
 
-#timer-input {
+.timer-inputs {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.timer-controls input[type="number"] {
     background-color: #1e1e1e;
     color: #fff;
     border: 1px solid #4adf8e;
     padding: 8px 12px;
     border-radius: 5px;
     font-size: 16px;
-    width: 60px;
-    text-align: center;
+    width: 45px;
+    text-align: right;
+    padding-right: 5px;
     -moz-appearance: textfield; /* Firefox */
 }
 
 /* Hide number input arrows for Chrome, Safari, Edge */
-#timer-input::-webkit-outer-spin-button,
-#timer-input::-webkit-inner-spin-button {
+.timer-controls input[type="number"]::-webkit-outer-spin-button,
+.timer-controls input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }

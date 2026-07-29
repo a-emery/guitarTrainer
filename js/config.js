@@ -24,7 +24,8 @@ export const DOM = {
     cheatSheetOverlay: document.getElementById('cheat-sheet-overlay'),
     closeOverlayBtn: document.getElementById('close-overlay-btn'),
     timerEnableSwitch: document.getElementById('timer-enable-switch'),
-    timerInput: document.getElementById('timer-input'),
+    timerMinutesInput: document.getElementById('timer-minutes-input'),
+    timerSecondsInput: document.getElementById('timer-seconds-input'),
     timerDisplay: document.getElementById('timer-display'), // In compact-display
     timerCompactDisplay: document.getElementById('timer-compact-display'),
     resetTimerBtn: document.getElementById('reset-timer-btn'),

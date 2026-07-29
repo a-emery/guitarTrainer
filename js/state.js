@@ -11,7 +11,7 @@ export const State = {
     isRunning: false,
     isTimerEnabled: false,
     isTimerRunning: false,
-    timerDuration: 5, // Default to 5 minutes
+    timerDuration: 300, // Default to 5 minutes (in seconds)
     timeRemaining: 0,
     timerInterval: null,
     nextBeatTime: 0.0, // For self-adjusting timer
