@@ -235,10 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Without this, the scroll might happen before the viewport has resized.
             setTimeout(() => {
                 e.target.scrollIntoView({
-                    behavior: 'smooth',
                     block: 'center',
                 });
-            }, 300);
+            }, 100);
         };
 
         DOM.timerMinutesInput.addEventListener('change', handleTimerInputChange);
