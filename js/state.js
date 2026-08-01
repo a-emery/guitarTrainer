@@ -20,6 +20,7 @@ export const State = {
     previousString: null,
     previousNote: null,
     currentKey: 'C',
+    isEasyModeEnabled: false,
     currentNashvilleNumber: null,
     previousNashvilleNumber: null,
     previousNashvilleChord: null,

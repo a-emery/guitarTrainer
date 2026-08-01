@@ -329,6 +329,14 @@ body {
     border-top: 1px solid #333;
 }
 
+.numbers-options-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
 #metronome {
     display: flex;
     gap: 15px;
@@ -487,11 +495,10 @@ input:checked + .slider:before {
 #cheat-sheet-key-selector {
     background-color: #333;
     color: #fff;
-    border: 1px solid #4adf8e;
-    padding: 10px 15px;
+    border: 1px solid #444;
+    padding: 5px 15px;
     border-radius: 5px;
-    font-size: 16px;
-    width: 80px;
+    font-size: 14px;
     text-align: center;
     -webkit-appearance: none;
     appearance: none;
@@ -500,14 +507,30 @@ input:checked + .slider:before {
 #key-selector:focus,
 #cheat-sheet-key-selector:focus {
     outline: none;
-    border-color: #fff;
+    border-color: #4adf8e;
 }
 
 .label-wrapper {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    /* Use separate row/column gaps for more control */
+    row-gap: 10px;
+    column-gap: 8px;
+}
+
+.label-with-icon {
+    display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
+}
+
+/* Make the label group (for Key) and the label (for Easy) take full width to push the control below */
+.label-with-icon,
+.label-wrapper > label[for="easy-mode-switch"] {
+    width: 100%;
 }
 
 .link-button {

@@ -19,6 +19,7 @@ export const DOM = {
     tabContents: document.querySelectorAll('.tab-content'),
     keySelector: document.getElementById('key-selector'),
     globalControls: document.getElementById('global-controls'),
+    easyModeSwitch: document.getElementById('easy-mode-switch'),
     expandControlsBtn: document.getElementById('expand-controls-btn'),
     openCheatSheetBtn: document.getElementById('open-cheat-sheet-btn'),
     cheatSheetOverlay: document.getElementById('cheat-sheet-overlay'),

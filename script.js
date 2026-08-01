@@ -173,6 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
             State.currentKey = e.target.value;
         });
 
+        DOM.easyModeSwitch.addEventListener('change', (e) => {
+            State.isEasyModeEnabled = e.target.checked;
+        });
+
         DOM.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 // Stop the metronome and reset state before switching tabs
@@ -268,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Initialize UI elements to match default state, since settings are not persisted.
         DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
+        DOM.easyModeSwitch.checked = State.isEasyModeEnabled;
 
         // Check for tab in URL on page load and switch to it
         const urlParams = new URLSearchParams(window.location.search);

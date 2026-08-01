@@ -37,9 +37,16 @@ export function updateNumbersDisplay() {
 
     // Generate a new "current" number for the user to solve.
     let newNashvilleNumber;
-    do {
-        newNashvilleNumber = Math.floor(Math.random() * 7) + 1;
-    } while (newNashvilleNumber === State.currentNashvilleNumber);
+    if (State.isEasyModeEnabled) {
+        const easyNumbers = [1, 4, 5, 6];
+        do {
+            newNashvilleNumber = easyNumbers[Math.floor(Math.random() * easyNumbers.length)];
+        } while (newNashvilleNumber === State.currentNashvilleNumber);
+    } else {
+        do {
+            newNashvilleNumber = Math.floor(Math.random() * 7) + 1;
+        } while (newNashvilleNumber === State.currentNashvilleNumber);
+    }
     State.currentNashvilleNumber = newNashvilleNumber;
 
     // Update the top display with the new number.
