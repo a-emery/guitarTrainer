@@ -53,7 +53,7 @@ body {
 #fretboard-tab-content.active {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-between;
 }
 
 #numbers-tab-content.active {
@@ -350,7 +350,6 @@ body {
 #numbers-game-area {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
     flex-grow: 1;
 }
 

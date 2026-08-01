@@ -276,10 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check for tab in URL on page load and switch to it
         const urlParams = new URLSearchParams(window.location.search);
-        const tabId = urlParams.get('tab');
-        if (tabId) {
-            switchTab(tabId);
-        }
+        const tabId = urlParams.get('tab') || 'fretboard-tab-content';
+        switchTab(tabId);
 
         // Initialize timer state and display, ensuring it's in sync with the inputs.
         const minutes = parseInt(DOM.timerMinutesInput.value, 10) || 0;
