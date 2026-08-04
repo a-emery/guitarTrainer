@@ -5,7 +5,9 @@ export const DOM = {
     currentNumberDisplay: document.getElementById('current-number-display'),
     answerNumberDisplay: document.getElementById('answer-number-display'),
     answerChordDisplay: document.getElementById('answer-chord-display'),
-    beatDots: [
+    noteTypeSelector: document.getElementById('note-type-selector'),
+    instTypeSelector: document.getElementById('inst-type-selector'),
+    beatDots: [ // In metronome
         document.getElementById('beat-1'),
         document.getElementById('beat-2'),
         document.getElementById('beat-3'),
@@ -14,7 +16,6 @@ export const DOM = {
     accentCaret: document.querySelector('.accent-caret'),
     tempoSlider: document.getElementById('tempo-slider'),
     tempoValue: document.getElementById('tempo-value'), // In bpm-display
-    noteTypeButtons: document.querySelectorAll('.note-type-btn'),
     startStopBtn: document.getElementById('start-stop-btn'),
     tabs: document.querySelectorAll('.tab-btn'),
     tabContents: document.querySelectorAll('.tab-content'),

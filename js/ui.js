@@ -41,13 +41,26 @@ export function updateFretboardDisplay() {
     }
 
     // Now, generate a new question.
-    // The internal logic still uses standard numbering (1=high E, 6=low E)
+    // The internal logic still uses standard numbering (1=high E, 6=low E).
+    let minString = 1; // High E (standard guitar numbering)
+    let maxString = 6; // Low E (standard guitar numbering)
+
+    if (State.instType === 'bass') {
+        // Bass typically has 4 strings. If we map to guitar strings:
+        // Bass E (lowest) -> Guitar String 6
+        // Bass A          -> Guitar String 5
+        // Bass D          -> Guitar String 4
+        // Bass G (highest) -> Guitar String 3
+        minString = 3; // Corresponds to G string on guitar
+        maxString = 6; // Corresponds to low E string on guitar
+    }
+
     let actualNewString;
     do {
-        actualNewString = Math.floor(Math.random() * 6) + 1;
+        actualNewString = Math.floor(Math.random() * (maxString - minString + 1)) + minString;
     } while (actualNewString === State.previousString);
 
-    const availableNotes = CONSTANTS.NOTES[State.noteType];
+    const availableNotes = CONSTANTS.NOTES[DOM.noteTypeSelector.value];
     let newNote;
     if (availableNotes.length > 1) {
         do {
@@ -56,12 +69,9 @@ export function updateFretboardDisplay() {
     } else {
         newNote = availableNotes.length ? availableNotes[0] : '--';
     }
-
     // Update the main display with the new question.
     // Display the flipped string number (1=low E, 6=high E)
     DOM.stringDisplay.textContent = 7 - actualNewString;
-    DOM.noteDisplay.textContent = newNote;
-
     // Finally, save the new question to the state for the next cycle.
     // We store the *actual* string number, not the displayed one.
     State.previousString = actualNewString;

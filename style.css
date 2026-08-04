@@ -132,6 +132,14 @@ body {
     margin-bottom: 15px;
 }
 
+.options-divider {
+    height: 1px;
+    width: 80%;
+    background-color: #333;
+    margin: 15px auto;
+    border: none;
+}
+
 .control-group label {
     color: #a0a0a0;
     font-weight: 500;
@@ -169,27 +177,6 @@ body {
 #note-type-selector {
     display: flex;
     gap: 10px;
-}
-
-.note-type-btn {
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #4adf8e;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    touch-action: manipulation;
-}
-
-.note-type-btn.active {
-    background-color: #4adf8e;
-    color: #121212;
-    font-weight: bold;
-}
-
-.note-type-btn:active {
-    /* Darken non-active buttons on press */
-    background-color: #444;
 }
 
 #start-stop-btn {
@@ -490,6 +477,37 @@ input:checked + .slider:before {
     font-size: 30px;
 }
 
+#note-type-selector,
+#inst-type-selector {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #444;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+    -webkit-appearance: none; /* Remove default browser styling */
+    appearance: none;
+    /* Add a custom arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23a0a0a0'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em;
+    padding-right: 2.5rem; /* Make space for the custom arrow */
+}
+
+#note-type-selector:focus,
+#inst-type-selector:focus {
+    outline: none;
+    border-color: #4adf8e;
+}
+
+.fretboard-controls-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Space between the two select boxes */
+}
+
 #key-selector,
 #cheat-sheet-key-selector {
     background-color: #333;
@@ -656,8 +674,9 @@ input:checked + .slider:before {
     .display-header,
     .control-group label,
     #key-selector,
+    #note-type-selector,
+    #inst-type-selector,
     #cheat-sheet-key-selector,
-    .note-type-btn,
     .tab-btn {
         font-size: 18px;
     }

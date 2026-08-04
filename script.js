@@ -157,12 +157,20 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.tempoValue.textContent = State.tempo;
         });
 
-        DOM.noteTypeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                DOM.noteTypeButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                State.noteType = button.dataset.type;
-            });
+        DOM.noteTypeSelector.addEventListener('change', (e) => {
+            State.noteType = e.target.value;
+            // If metronome is running and fretboard tab is active, update display immediately
+            if (State.isRunning && document.querySelector('.tab-btn.active').dataset.tab === 'fretboard-tab-content') {
+                updateFretboardDisplay();
+            }
+        });
+
+        DOM.instTypeSelector.addEventListener('change', (e) => {
+            State.instType = e.target.value;
+            // If metronome is running and fretboard tab is active, update display immediately
+            if (State.isRunning && document.querySelector('.tab-btn.active').dataset.tab === 'fretboard-tab-content') {
+                updateFretboardDisplay();
+            }
         });
 
         DOM.beatDots[0].addEventListener('click', () => {
@@ -275,6 +283,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize UI elements to match default state, since settings are not persisted.
         DOM.accentCaret.style.display = State.accentEnabled ? 'block' : 'none';
         DOM.easyModeSwitch.checked = State.isEasyModeEnabled;
+        DOM.noteTypeSelector.value = State.noteType; // 'naturals' by default in State
+        DOM.instTypeSelector.value = State.instType; // 'guitar' by default in State
 
         // Check for tab in URL on page load and switch to it
         const urlParams = new URLSearchParams(window.location.search);

@@ -17,6 +17,7 @@ export const State = {
     nextBeatTime: 0.0, // For self-adjusting timer
     accentEnabled: true,
     noteType: 'naturals',
+    instType: 'guitar', // 'guitar' or 'bass'
     previousString: null,
     previousNote: null,
     currentKey: 'C',
