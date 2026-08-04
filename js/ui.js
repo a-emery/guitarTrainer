@@ -2,16 +2,53 @@ import { DOM, CONSTANTS } from './config.js';
 import { State } from './state.js';
 import { getMajorScale, getMajorScaleChord } from './music-theory.js';
 
+/**
+ * Calculates the lowest fret number for a given note on a given string.
+ * String 1 is high E, String 6 is low E.
+ * @param {number} stringNumber The guitar string (1-6).
+ * @param {string} note The name of the note (e.g., 'C#', 'Bb').
+ * @returns {number|string} The fret number, or '--' if not found.
+ */
+function getFretForNote(stringNumber, note) {
+    // Standard tuning: 1=E, 2=B, 3=G, 4=D, 5=A, 6=E
+    const openStringNotes = { 1: 'E', 2: 'B', 3: 'G', 4: 'D', 5: 'A', 6: 'E' };
+    const chromaticScale = {
+        'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'F': 5,
+        'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+    };
+
+    const openNote = openStringNotes[stringNumber];
+    if (!openNote || chromaticScale[note] === undefined) {
+        return '--';
+    }
+
+    const noteValue = chromaticScale[note];
+    const openNoteValue = chromaticScale[openNote];
+
+    let fret = noteValue - openNoteValue;
+    if (fret < 0) {
+        fret += 12;
+    }
+    return fret;
+}
+
 export function updateFretboardDisplay() {
-    let newString;
+    // The "answer" is whatever was in the state from the previous beat.
+    if (State.previousNote !== null && State.previousString !== null) {
+        // getFretForNote uses standard numbering (1=high E) which is what we store in state
+        const fret = getFretForNote(State.previousString, State.previousNote);
+        DOM.answerFretDisplay.textContent = fret;
+    }
+
+    // Now, generate a new question.
+    // The internal logic still uses standard numbering (1=high E, 6=low E)
+    let actualNewString;
     do {
-        newString = Math.floor(Math.random() * 6) + 1;
-    } while (newString === State.previousString);
-    State.previousString = newString;
+        actualNewString = Math.floor(Math.random() * 6) + 1;
+    } while (actualNewString === State.previousString);
 
     const availableNotes = CONSTANTS.NOTES[State.noteType];
     let newNote;
-    // Prevent infinite loop if only one note is possible
     if (availableNotes.length > 1) {
         do {
             newNote = availableNotes[Math.floor(Math.random() * availableNotes.length)];
@@ -19,10 +56,16 @@ export function updateFretboardDisplay() {
     } else {
         newNote = availableNotes.length ? availableNotes[0] : '--';
     }
-    State.previousNote = newNote;
 
-    DOM.stringDisplay.textContent = newString;
+    // Update the main display with the new question.
+    // Display the flipped string number (1=low E, 6=high E)
+    DOM.stringDisplay.textContent = 7 - actualNewString;
     DOM.noteDisplay.textContent = newNote;
+
+    // Finally, save the new question to the state for the next cycle.
+    // We store the *actual* string number, not the displayed one.
+    State.previousString = actualNewString;
+    State.previousNote = newNote;
 }
 
 export function updateNumbersDisplay() {

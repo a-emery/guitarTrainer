@@ -1,6 +1,7 @@
 export const DOM = {
     stringDisplay: document.getElementById('string-display'),
     noteDisplay: document.getElementById('note-display'),
+    answerFretDisplay: document.getElementById('answer-fret-display'),
     currentNumberDisplay: document.getElementById('current-number-display'),
     answerNumberDisplay: document.getElementById('answer-number-display'),
     answerChordDisplay: document.getElementById('answer-chord-display'),

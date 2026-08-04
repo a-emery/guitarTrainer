@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset displays and state for a clean start
         State.currentNashvilleNumber = null;
         DOM.currentNumberDisplay.textContent = '--';
+        DOM.answerFretDisplay.textContent = '--';
         DOM.answerNumberDisplay.textContent = '--';
         DOM.answerChordDisplay.textContent = '--';
 
@@ -185,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Also reset the answer displays, which stop() preserves for review
+                DOM.answerFretDisplay.textContent = '--';
                 DOM.answerNumberDisplay.textContent = '--';
                 DOM.answerChordDisplay.textContent = '--';
 
